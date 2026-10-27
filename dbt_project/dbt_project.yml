@@ -1,0 +1,48 @@
+name: signal_engine
+version: "0.1.0"
+config-version: 2
+profile: signal_engine
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  signal_engine:
+    staging:
+      +schema: staging
+      +materialized: view
+    silver:
+      +schema: silver
+      +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table
+
+seeds:
+  signal_engine:
+    +schema: seeds
+    signal_taxonomy:
+      +column_types:
+        weight: double
+        half_life_days: double
+        baseline_ping: boolean
+    page_rules:
+      +column_types:
+        priority: integer
+    fit_rules:
+      +column_types:
+        min_value: double
+        max_value: double
+        points: integer
+    fit_grades:
+      +column_types:
+        min_points: integer
+        max_points: integer
+        multiplier: double
+    scoring_params:
+      +column_types:
+        value: varchar

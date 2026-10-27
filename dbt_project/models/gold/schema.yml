@@ -1,0 +1,123 @@
+version: 2
+
+models:
+  - name: account_daily_scores
+    description: One row per account per score date (warm-up + evaluation window).
+    columns:
+      - name: account_id
+        data_tests: [not_null]
+      - name: score_date
+        data_tests: [not_null]
+      - name: engine_score
+        data_tests: [not_null]
+      - name: fit_grade
+        data_tests:
+          - accepted_values: {arguments: {values: ['A', 'B', 'C', 'D']}}
+
+  - name: engine_alerts
+    columns:
+      - name: account_id
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('stg_accounts'), field: account_id}}
+      - name: tier
+        data_tests:
+          - accepted_values: {arguments: {values: ['hot']}}
+
+  - name: baseline_points_alerts
+    columns:
+      - name: account_id
+        data_tests: [unique, not_null]
+
+unit_tests:
+  - name: t_u1_u2_u3_decay_and_point_in_time
+    description: Weight 8, half-life 7 → 4.0 after 7 days, 2.0 after 14. An event at 00:00 on the score date is not visible yet.
+    model: int_engagement_contrib
+    given:
+      - input: ref('events_clean')
+        rows:
+          - {event_id: e1, account_id: a1, person_key: c1, event_type: security_page, source: web, occurred_at: "2026-07-01 00:00:00", known_at: "2026-07-01 00:00:00", category: engagement, funnel_stage: BOFU, weight: 8, half_life_days: 7}
+      - input: ref('date_spine')
+        rows:
+          - {score_date: "2026-07-01"}
+          - {score_date: "2026-07-08"}
+          - {score_date: "2026-07-15"}
+      - input: ref('scoring_params')
+        rows:
+          - {param: lookback_days, value: "180"}
+    expect:
+      rows:
+        - {account_id: a1, score_date: "2026-07-08", event_type: security_page, contribution: 4.0, n_events: 1}
+        - {account_id: a1, score_date: "2026-07-15", event_type: security_page, contribution: 2.0, n_events: 1}
+
+  - name: t_u3b_late_identity_not_used_before_known
+    description: A cookie-stitched event that occurred on 1 Jul but was only attributable on 10 Jul counts from 11 Jul, aged from 1 Jul.
+    model: int_engagement_contrib
+    given:
+      - input: ref('events_clean')
+        rows:
+          - {event_id: e1, account_id: a1, person_key: c1, event_type: pricing_page, source: web, occurred_at: "2026-07-01 00:00:00", known_at: "2026-07-10 12:00:00", category: engagement, funnel_stage: BOFU, weight: 5, half_life_days: 5}
+      - input: ref('date_spine')
+        rows:
+          - {score_date: "2026-07-06"}
+          - {score_date: "2026-07-11"}
+      - input: ref('scoring_params')
+        rows:
+          - {param: lookback_days, value: "180"}
+    expect:
+      rows:
+        - {account_id: a1, score_date: "2026-07-11", event_type: pricing_page, contribution: 1.25, n_events: 1}
+
+  - name: t_u5_job_posts_and_cap
+    description: Open post = full weight; closed 14 days ago = half; at most 3 open posts count; funding decays from its date.
+    model: int_trigger_contrib
+    given:
+      - input: ref('triggers_clean')
+        rows:
+          - {event_id: t1, account_id: open1, trigger_type: sdr_job_post, occurred_at: "2026-06-01 00:00:00", closed_at: null, weight: 3, half_life_days: 14}
+          - {event_id: t2, account_id: closed1, trigger_type: sdr_job_post, occurred_at: "2026-05-01 00:00:00", closed_at: "2026-06-17 00:00:00", weight: 3, half_life_days: 14}
+          - {event_id: t3, account_id: many, trigger_type: sdr_job_post, occurred_at: "2026-06-01 00:00:00", closed_at: null, weight: 3, half_life_days: 14}
+          - {event_id: t4, account_id: many, trigger_type: sdr_job_post, occurred_at: "2026-06-02 00:00:00", closed_at: null, weight: 3, half_life_days: 14}
+          - {event_id: t5, account_id: many, trigger_type: sdr_job_post, occurred_at: "2026-06-03 00:00:00", closed_at: null, weight: 3, half_life_days: 14}
+          - {event_id: t6, account_id: many, trigger_type: sdr_job_post, occurred_at: "2026-06-04 00:00:00", closed_at: null, weight: 3, half_life_days: 14}
+          - {event_id: t7, account_id: funded, trigger_type: funding_round, occurred_at: "2026-04-17 00:00:00", closed_at: null, weight: 4, half_life_days: 75}
+      - input: ref('date_spine')
+        rows:
+          - {score_date: "2026-07-01"}
+      - input: ref('scoring_params')
+        rows:
+          - {param: lookback_days, value: "180"}
+          - {param: max_open_job_posts, value: "3"}
+    expect:
+      rows:
+        - {account_id: open1, score_date: "2026-07-01", trigger_type: sdr_job_post, contribution: 3.0, n_events: 1}
+        - {account_id: closed1, score_date: "2026-07-01", trigger_type: sdr_job_post, contribution: 1.5, n_events: 1}
+        - {account_id: many, score_date: "2026-07-01", trigger_type: sdr_job_post, contribution: 9.0, n_events: 3}
+        - {account_id: funded, score_date: "2026-07-01", trigger_type: funding_round, contribution: 2.0, n_events: 1}
+
+  - name: t_u8_alert_on_entry_with_rearm
+    description: Crosses on day 3 (alert), stays hot to day 10, drops, re-crosses day 20 (alert, 17 days later), re-crosses day 23 (no alert, only 3 days later).
+    model: engine_alerts
+    given:
+      - input: ref('account_daily_scores')
+        format: sql
+        rows: |
+          select 'a1' as account_id, cast(date '2026-07-01' + cast(i - 1 as integer) as date) as score_date,
+                 0.0 as activity_score, 0.0 as trigger_score, 'A' as fit_grade, 1.0 as fit_multiplier,
+                 case when i between 3 and 10 or i = 20 or i = 23 then 20.0 else 5.0 end as engine_score,
+                 0 as people_14d, 0 as bofu_people_14d, 0 as sources_14d, 'pricing_page' as top_signals
+          from range(1, 26) t(i)
+      - input: ref('account_exclusions')
+        rows:
+          - {account_id: a1, excluded: false, reason: null}
+      - input: ref('stg_accounts')
+        rows:
+          - {account_id: a1, owner_ae_id: ae_1}
+      - input: ref('scoring_params')
+        rows:
+          - {param: engine_threshold, value: "10"}
+          - {param: rearm_days, value: "14"}
+    expect:
+      rows:
+        - {account_id: a1, alert_date: "2026-07-03"}
+        - {account_id: a1, alert_date: "2026-07-20"}

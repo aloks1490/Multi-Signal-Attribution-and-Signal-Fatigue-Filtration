@@ -1,0 +1,16 @@
+param,value
+sim_start,2026-03-31
+eval_start,2026-06-29
+eval_end,2026-09-27
+warmup_days,28
+lookback_days,180
+bot_events_per_hour,30
+max_open_job_posts,3
+rearm_days,14
+capacity_per_week,50
+warm_ratio,0.5
+watch_ratio,0.25
+engine_threshold,18.4334
+points_threshold,45.1842
+engine_threshold_capacity,2.4000
+points_threshold_capacity,17.0000

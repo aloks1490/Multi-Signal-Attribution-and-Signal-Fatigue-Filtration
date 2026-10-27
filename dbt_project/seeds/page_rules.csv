@@ -1,0 +1,9 @@
+path_pattern,event_type,priority
+/pricing%,pricing_page,1
+/vs/%,comparison_page,1
+/security%,security_page,1
+/trust/%,security_page,1
+/integrations/%,integration_page,1
+/customers/%,case_study_view,1
+/demo/thank-you%,demo_request,1
+/blog/%,blog_visit,2

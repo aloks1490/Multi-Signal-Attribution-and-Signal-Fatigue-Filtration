@@ -1,0 +1,8 @@
+rule,attribute,match_type,min_value,max_value,list_values,points
+size_core,employee_count,range,50,1000,,2
+size_small,employee_count,range,20,49,,1
+size_large,employee_count,range,1001,5000,,1
+industry,industry,in_list,,,B2B Software|Fintech|Martech|HR Tech|Cybersecurity|Data & Analytics,1
+region,region,in_list,,,NA|EU,1
+crm,crm,in_list,,,Salesforce|HubSpot,1
+sales_team,sales_headcount,range,5,1000000,,1

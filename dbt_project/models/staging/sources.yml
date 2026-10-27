@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: Raw tables written by the generator (what a company would have). The labels schema is deliberately not declared.
+    schema: bronze
+    tables:
+      - name: accounts
+      - name: contacts
+      - name: ip_company_map
+      - name: web_events
+      - name: product_events
+      - name: marketing_events
+      - name: trigger_events

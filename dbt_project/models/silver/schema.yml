@@ -1,0 +1,126 @@
+version: 2
+
+models:
+  - name: events_clean
+    description: Scorable engagement and hand-raise events after identity resolution, bot-hour removal and the daily cap.
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: account_id
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: ref('stg_accounts'), field: account_id}}
+      - name: person_key
+        data_tests: [not_null]
+      - name: category
+        data_tests:
+          - accepted_values: {arguments: {values: ['engagement', 'handraise']}}
+      - name: funnel_stage
+        data_tests:
+          - accepted_values: {arguments: {values: ['TOFU', 'MOFU', 'BOFU', 'NONE']}}
+      - name: source
+        data_tests:
+          - accepted_values: {arguments: {values: ['web', 'ads', 'product', 'marketing']}}
+      - name: known_at
+        data_tests: [not_null]
+
+  - name: triggers_clean
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: account_id
+        data_tests: [not_null]
+
+  - name: account_fit
+    columns:
+      - name: account_id
+        data_tests: [unique, not_null]
+      - name: fit_grade
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: ['A', 'B', 'C', 'D']}}
+
+  - name: account_exclusions
+    columns:
+      - name: account_id
+        data_tests: [unique, not_null]
+      - name: reason
+        data_tests:
+          - accepted_values: {arguments: {values: ['customer', 'competitor', 'open_deal', 'do_not_contact', 'fit_d']}}
+
+unit_tests:
+  - name: t_u4_daily_cap_one_row_per_person_type_day
+    model: events_clean
+    given:
+      - input: ref('int_events_resolved')
+        rows:
+          - {event_id: e1, occurred_at: "2026-07-01 09:00:00", known_at: "2026-07-01 09:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
+          - {event_id: e2, occurred_at: "2026-07-01 09:05:00", known_at: "2026-07-01 09:05:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
+          - {event_id: e3, occurred_at: "2026-07-01 11:00:00", known_at: "2026-07-01 11:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
+          - {event_id: e4, occurred_at: "2026-07-01 15:00:00", known_at: "2026-07-01 15:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
+          - {event_id: e5, occurred_at: "2026-07-01 18:00:00", known_at: "2026-07-01 18:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
+          - {event_id: e6, occurred_at: "2026-07-02 09:00:00", known_at: "2026-07-02 09:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
+      - input: ref('int_bot_hours')
+        format: sql
+        rows: select cast(null as varchar) as person_key, cast(null as timestamp) as hour, cast(0 as bigint) as events where false
+      - input: ref('signal_taxonomy')
+        rows:
+          - {event_type: pricing_page, category: engagement, source: web, funnel_stage: BOFU, weight: 5, half_life_days: 5, baseline_ping: true}
+    expect:
+      rows:
+        - {event_id: e1}
+        - {event_id: e6}
+
+  - name: t_u6_bot_hour_threshold
+    model: int_bot_hours
+    given:
+      - input: ref('int_events_resolved')
+        format: sql
+        rows: |
+          select 'b' || i as event_id, timestamp '2026-07-01 10:00:00' + to_seconds(i) as occurred_at,
+                 timestamp '2026-07-01 10:00:00' + to_seconds(i) as known_at, 'pricing_page' as event_type, 'web' as source,
+                 cast(null as varchar) as contact_id, 'a1' as account_id, 'anon:bot' as person_key, 'ip' as resolution_method
+          from range(30) t(i)
+          union all
+          select 'h' || i, timestamp '2026-07-01 10:00:00' + to_seconds(i), timestamp '2026-07-01 10:00:00' + to_seconds(i),
+                 'pricing_page', 'web', null, 'a1', 'anon:human', 'ip'
+          from range(29) t(i)
+      - input: ref('scoring_params')
+        rows:
+          - {param: bot_events_per_hour, value: "30"}
+    expect:
+      rows:
+        - {person_key: "anon:bot", events: 30}
+
+  - name: t_u7_fit_size_boundaries
+    model: account_fit
+    given:
+      - input: ref('stg_accounts')
+        rows:
+          - {account_id: s50, employee_count: 50, sales_headcount: 0, industry: Retail, region: APAC, crm: None}
+          - {account_id: s1000, employee_count: 1000, sales_headcount: 0, industry: Retail, region: APAC, crm: None}
+          - {account_id: s49, employee_count: 49, sales_headcount: 0, industry: Retail, region: APAC, crm: None}
+          - {account_id: s1001, employee_count: 1001, sales_headcount: 0, industry: Retail, region: APAC, crm: None}
+          - {account_id: full, employee_count: 200, sales_headcount: 12, industry: Fintech, region: EU, crm: HubSpot}
+      - input: ref('fit_rules')
+        rows:
+          - {rule: size_core, attribute: employee_count, match_type: range, min_value: 50, max_value: 1000, list_values: null, points: 2}
+          - {rule: size_small, attribute: employee_count, match_type: range, min_value: 20, max_value: 49, list_values: null, points: 1}
+          - {rule: size_large, attribute: employee_count, match_type: range, min_value: 1001, max_value: 5000, list_values: null, points: 1}
+          - {rule: industry, attribute: industry, match_type: in_list, min_value: null, max_value: null, list_values: "B2B Software|Fintech", points: 1}
+          - {rule: region, attribute: region, match_type: in_list, min_value: null, max_value: null, list_values: "NA|EU", points: 1}
+          - {rule: crm, attribute: crm, match_type: in_list, min_value: null, max_value: null, list_values: "Salesforce|HubSpot", points: 1}
+          - {rule: sales_team, attribute: sales_headcount, match_type: range, min_value: 5, max_value: 1000000, list_values: null, points: 1}
+      - input: ref('fit_grades')
+        rows:
+          - {grade: A, min_points: 5, max_points: 6, multiplier: 1.0}
+          - {grade: B, min_points: 4, max_points: 4, multiplier: 0.75}
+          - {grade: C, min_points: 3, max_points: 3, multiplier: 0.4}
+          - {grade: D, min_points: 0, max_points: 2, multiplier: 0.0}
+    expect:
+      rows:
+        - {account_id: s50, fit_points: 2, fit_grade: D}
+        - {account_id: s1000, fit_points: 2, fit_grade: D}
+        - {account_id: s49, fit_points: 1, fit_grade: D}
+        - {account_id: s1001, fit_points: 1, fit_grade: D}
+        - {account_id: full, fit_points: 6, fit_grade: A}
