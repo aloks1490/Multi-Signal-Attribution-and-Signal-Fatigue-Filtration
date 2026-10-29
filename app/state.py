@@ -6,6 +6,7 @@ is visible in code review and in the audit log here.
 from __future__ import annotations
 
 import csv
+import json
 import os
 from contextlib import contextmanager
 from datetime import date, datetime
@@ -38,6 +39,16 @@ def _state():
             create table if not exists feedback (
                 account_id varchar, alert_date date, profile varchar, outcome varchar,
                 note varchar, user_name varchar, created_at timestamp
+            )""")
+        con.execute("""
+            create table if not exists alert_narratives (
+                account_id varchar, alert_date date, facts_hash varchar, source varchar, model varchar,
+                narrative json, problems json, created_at timestamp
+            )""")
+        con.execute("""
+            create table if not exists activation_log (
+                run_date date, profile varchar, channel varchar, status varchar, n_alerts integer,
+                detail varchar, created_at timestamp
             )""")
         con.execute("""
             create table if not exists settings_audit (
@@ -119,3 +130,44 @@ def set_active_profile(new: str, user: str, reason: str, dbs: list[Path], projec
 def audit_log() -> pd.DataFrame:
     with _state() as con:
         return con.execute("select * from settings_audit order by created_at desc").df()
+
+
+# ---------- activation (narrative cache and post log) ----------
+
+def cached_narrative(account_id: str, alert_date: date, facts_hash: str) -> dict | None:
+    with _state() as con:
+        row = con.execute("""select narrative, source, model from alert_narratives
+                             where account_id = ? and alert_date = ? and facts_hash = ?
+                             order by created_at desc limit 1""", [account_id, alert_date, facts_hash]).fetchone()
+    if row is None:
+        return None
+    return {"content": json.loads(row[0]), "source": row[1], "model": row[2]}
+
+
+def save_narrative(account_id: str, alert_date: date, facts_hash: str, source: str, model: str | None,
+                   content: dict, problems: list[str]) -> None:
+    with _state() as con:
+        con.execute("insert into alert_narratives values (?, ?, ?, ?, ?, ?, ?, ?)",
+                    [account_id, alert_date, facts_hash, source, model, json.dumps(content), json.dumps(problems), datetime.now()])
+
+
+def narratives() -> pd.DataFrame:
+    with _state() as con:
+        return con.execute("select * from alert_narratives order by created_at desc").df()
+
+
+def already_posted(run_date: date, profile: str, channel: str) -> bool:
+    with _state() as con:
+        return con.execute("select count(*) from activation_log where run_date = ? and profile = ? and channel = ? and status = 'posted'",
+                           [run_date, profile, channel]).fetchone()[0] > 0
+
+
+def log_activation(run_date: date, profile: str, channel: str, status: str, n_alerts: int, detail: str = "") -> None:
+    with _state() as con:
+        con.execute("insert into activation_log values (?, ?, ?, ?, ?, ?, ?)",
+                    [run_date, profile, channel, status, n_alerts, detail, datetime.now()])
+
+
+def activation_log() -> pd.DataFrame:
+    with _state() as con:
+        return con.execute("select * from activation_log order by created_at desc").df()

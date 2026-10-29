@@ -12,13 +12,21 @@ dependencies = [
     "dbt-duckdb>=1.9,<1.11",
     "streamlit>=1.66.1",
     "plotly>=7.1.0",
+    "requests>=2.31",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["generator", "eval", "engine", "activation", "app"]
 
 [dependency-groups]
 dev = ["pytest>=8"]
 
 [tool.uv]
-package = false
+package = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

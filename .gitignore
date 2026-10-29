@@ -11,3 +11,4 @@ logs/
 .DS_Store
 dbt_project/.user.yml
 .claude/
+out/

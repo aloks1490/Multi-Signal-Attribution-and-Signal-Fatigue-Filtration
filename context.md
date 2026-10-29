@@ -179,3 +179,10 @@ Full spec: [docs/implementation.md](docs/implementation.md).
 - Streamlit app (`make app`): Overview, Alert feed, Account deep-dive, Tuning sandbox, Settings. Explore toggle in the sidebar (viewer only); the active profile is changed only in Settings (reason + confirmation, rebuilds `engine_alerts`, audit log in `data/app_state.duckdb`).
 - Built for the Reflex port: `app/queries.py`, `app/charts.py`, `app/state.py`, `app/sandbox.py` have no Streamlit imports; Reflex state handlers can call them unchanged.
 - DuckDB rule that shaped the design: one writer or many readers, so the app opens the warehouse read-only per call and keeps its own state in a separate file.
+
+## M4 (29 Oct 2026)
+
+- Decided: cooldown 14 days, score-jump override ×1.5 after ≥ 3 days, per-AE budget 2/day and 10/week, deferral up to 3 days then drop; one Slack channel digest via webhook; replay clock for the daily run; **open-source LLM on a free tier (OpenRouter or NVIDIA NIM) instead of Claude**, through one OpenAI-compatible client (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`).
+- Built: `engine/alerting.py` (shared by the dbt Python model `alert_candidates` and by calibration), `gold.alert_context` fact sheets, `activation/` (checker rejects invented people, numbers and names; template fallback; cache; post-once log), `.github/workflows/ci.yml` and `daily.yml`. The repo is now an installable package (hatchling) so dbt's Python model can import `engine`.
+- Holdout after M4: broad 67 alerts (jump re-alerts added), 55% alert precision, 48.6% account precision, 68% recall; budget never binds at this volume.
+- To go live: add `SLACK_WEBHOOK_URL`, `LLM_API_KEY` secrets and `LLM_BASE_URL`, `LLM_MODEL` variables in GitHub.

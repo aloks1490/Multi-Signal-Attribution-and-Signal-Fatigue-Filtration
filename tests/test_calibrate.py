@@ -49,7 +49,7 @@ def as_set(df):
 @pytest.mark.parametrize("profile", ["precise", "broad"])
 def test_c1_engine_sim_matches_dbt(con, profile):
     params = load_params(con)
-    sim = EngineSim(con, int(params["rearm_days"])).alerts(float(params[f"engine_threshold_{profile}"]))
+    sim = EngineSim(con).alerts(float(params[f"engine_threshold_{profile}"]))
     dbt = con.execute("select account_id, alert_date from gold.engine_alerts where profile = ?", [profile]).df()
     assert as_set(sim) == as_set(dbt)
 

@@ -17,11 +17,10 @@ BUDGETS = (15, 25, 40, 60)  # alerts over the whole evaluation window
 def budget_table(con: duckdb.DuckDBPyConnection, params: dict[str, str], truth: pd.DataFrame, window) -> dict[str, dict[int, dict]]:
     """Each method at the same alert volume. The threshold is the one whose in-window alert count is closest to
     the budget, chosen from counts alone (no labels), so this comparison is fair on the holdout seed too."""
-    rearm = int(params["rearm_days"])
     sims = {
         "Static points": PointsSim(con),
-        "Engine M1": EngineSim(con, rearm, "engine_score_m1"),
-        "Engine M2": EngineSim(con, rearm),
+        "Engine M1": EngineSim(con, "engine_score_m1"),
+        "Engine M2": EngineSim(con),
     }
     out: dict[str, dict[int, dict]] = {}
     for name, sim in sims.items():
@@ -52,8 +51,8 @@ def method_alerts(con: duckdb.DuckDBPyConnection, params: dict[str, str]) -> dic
         "Static points @ capacity": PointsSim(con).alerts(float(params["points_threshold_capacity"])),
         "Static points precise (F1)": _profile(con, "baseline_points_alerts", "precise"),
         "Static points broad (F2)": _profile(con, "baseline_points_alerts", "broad"),
-        "Engine M1 precise (F1)": EngineSim(con, int(params["rearm_days"]), "engine_score_m1").alerts(float(params["engine_m1_threshold"])),
-        "Engine M2 @ capacity": EngineSim(con, int(params["rearm_days"])).alerts(float(params["engine_threshold_capacity"])),
+        "Engine M1 precise (F1)": EngineSim(con, "engine_score_m1").alerts(float(params["engine_m1_threshold"])),
+        "Engine M2 @ capacity": EngineSim(con).alerts(float(params["engine_threshold_capacity"])),
         "Engine M2 precise (F1)": _profile(con, "engine_alerts", "precise"),
         "Engine M2 broad (F2)": _profile(con, "engine_alerts", "broad"),
     }
@@ -71,6 +70,9 @@ def evaluate(db: str, n_aes: int) -> dict:
             rows[name]["busiest_week"] = int(weekly_counts(alerts["alert_date"], window).max())
             labelled[name] = label_alerts(alerts, truth, window).merge(truth[["account_id", "truth_class", "archetype"]], on="account_id")
         budgets = budget_table(con, params, truth, window)
+        decisions = con.execute("""
+            select profile, status, count(*) as n from gold.alert_candidates
+            where score_date between ? and ? group by 1, 2 order by 1, 2""", [window.start, window.end]).df()
         handraises = con.execute(
             "select count(*) from gold.handraise_routes where routed_date between ? and ?", [window.start, window.end]
         ).fetchone()[0]
@@ -82,6 +84,7 @@ def evaluate(db: str, n_aes: int) -> dict:
             "labelled": labelled,
             "handraises": handraises,
             "budgets": budgets,
+            "decisions": decisions,
             "positives": positives(truth, window),
         }
     finally:
@@ -111,6 +114,15 @@ def section(name: str, seed_note: str, r: dict) -> str:
     out += ["", f"Hand-raises routed outside scoring (demo requests): {r['handraises']}. "
             f"Post-meeting alerts dropped from metrics: " +
             ", ".join(f"{m} {s['post_meeting_alerts']}" for m, s in r["rows"].items()) + "."]
+
+    # What the cooldown and per-AE budget held back (engine M2).
+    d = r["decisions"].pivot_table(index="profile", columns="status", values="n", fill_value=0)
+    cols = [c for c in ("alerted", "cooldown", "deferred", "dropped", "expired") if c in d.columns]
+    out += ["", f"**Alerting decisions, engine M2** (cooldown {p['cooldown_days']} days, jump ×{p['jump_ratio']}, "
+            f"budget {p['ae_daily_budget']}/AE/day and {p['ae_weekly_budget']}/AE/week, defer up to {p['defer_days']} days)", "",
+            "| Profile | " + " | ".join(cols) + " |", "|---|" + "---:|" * len(cols)]
+    for prof, row in d.iterrows():
+        out.append(f"| {prof} | " + " | ".join(str(int(row[c])) for c in cols) + " |")
 
     # Same alert volume for every method: the fair way to compare ranking quality.
     out += ["", "**Equal alert budget** (threshold set by alert count alone; precision is per account)", "",

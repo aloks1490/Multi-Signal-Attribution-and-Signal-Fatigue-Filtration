@@ -18,6 +18,7 @@ import duckdb
 import numpy as np
 import pandas as pd
 
+from engine.alerting import AlertRules, run_alerts
 from eval.metrics import Window, summarize, weekly_counts
 
 N_CANDIDATES = 400
@@ -50,35 +51,40 @@ def simulate_entry_alerts(scores: np.ndarray, threshold: float, rearm_days: int)
 
 
 class EngineSim:
-    """Engine alerts for any threshold, from gold.account_daily_scores (non-excluded accounts).
+    """Engine alerts for any threshold, from gold.account_daily_scores (non-excluded accounts), through the same
+    rules as gold.engine_alerts (engine/alerting.py: cooldown, score jump, per-AE budget).
 
-    column: engine_score (M2, deployed) or engine_score_m1 (decay only, kept for comparison).
+    column: engine_score (M2) or engine_score_m1 (decay only, kept for comparison).
     """
 
-    def __init__(self, con: duckdb.DuckDBPyConnection, rearm_days: int, column: str = "engine_score"):
+    def __init__(self, con: duckdb.DuckDBPyConnection, column: str = "engine_score"):
         assert column in ("engine_score", "engine_score_m1")
+        self.rules = AlertRules.from_params(load_params(con))
         df = con.execute(f"""
-            select s.account_id, s.score_date, s.{column} as score
+            select s.account_id, s.score_date, s.{column} as score, a.owner_ae_id
             from gold.account_daily_scores s
             join silver.account_exclusions x using (account_id)
+            join staging.stg_accounts a using (account_id)
             where not x.excluded
         """).df()
         m = df.pivot(index="account_id", columns="score_date", values="score").sort_index(axis=1)
         self.scores = m.to_numpy()
         self.ids = list(m.index)
+        self.owners = df.drop_duplicates("account_id").set_index("account_id").loc[m.index, "owner_ae_id"].tolist()
         self.days = [pd.Timestamp(c).date() for c in m.columns]
-        self.rearm_days = rearm_days
 
     def candidates(self) -> np.ndarray:
         v = self.scores[self.scores > 0]
         return np.unique(np.round(np.quantile(v, np.linspace(0.5, 1, N_CANDIDATES)), 4))
 
+    def log(self, threshold: float) -> pd.DataFrame:
+        log = run_alerts(self.scores, self.owners, self.days, threshold, self.rules)
+        return log.assign(account_id=[self.ids[i] for i in log["account"]], date=[self.days[d] for d in log["day"]])
+
     def alerts(self, threshold: float) -> pd.DataFrame:
-        rows, cols = np.nonzero(simulate_entry_alerts(self.scores, threshold, self.rearm_days))
-        return pd.DataFrame({
-            "account_id": [self.ids[i] for i in rows],
-            "alert_date": [self.days[j] for j in cols],
-        })
+        log = self.log(threshold)
+        hit = log[log["status"] == "alerted"]
+        return pd.DataFrame({"account_id": hit["account_id"].tolist(), "alert_date": hit["date"].tolist()})
 
 
 class PointsSim:
@@ -152,9 +158,8 @@ def run(db: str, seed_csv: Path, n_aes: int) -> dict[str, float]:
         window = window_from(params, n_aes)
         capacity = int(params["capacity_per_week"])
         truth = con.execute("select * from labels.account_truth").df()
-        rearm = int(params["rearm_days"])
-        engine = choose(EngineSim(con, rearm), truth, window, capacity)
-        engine_m1 = choose(EngineSim(con, rearm, "engine_score_m1"), truth, window, capacity)
+        engine = choose(EngineSim(con), truth, window, capacity)
+        engine_m1 = choose(EngineSim(con, "engine_score_m1"), truth, window, capacity)
         points = choose(PointsSim(con), truth, window, capacity)
     finally:
         con.close()

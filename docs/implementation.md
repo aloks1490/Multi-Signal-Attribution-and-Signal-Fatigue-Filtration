@@ -1,6 +1,6 @@
 # Signal Engine: Implementation Spec
 
-Status: M1–M3 built · 29 Oct 2026 · owner: Alok Singh
+Status: M1–M4 built · 29 Oct 2026 · owner: Alok Singh
 
 This is the build reference. [context.md](../context.md) explains *why* the design looks like this; this file says *what* gets built, in what shape, and how we know it works.
 
@@ -55,8 +55,8 @@ A company using a competitor (Outreach, Salesloft, Apollo) is not scored higher 
 | Frontend (M3) | **Streamlit** | locked | Fastest Python UI; free Community Cloud hosting |
 | Frontend (later) | **Reflex** | pin exact version | Planned migration; see §11 |
 | CRM (M5) | **HubSpot free** via private-app API | — | Most common CRM at the target companies |
-| Alerts (M4) | Slack incoming webhook | — | Free |
-| LLM (M4) | Claude API (Haiku) | — | Writes alert text from structured facts; classifies text signals |
+| Alerts (M4) | Slack incoming webhook (one channel digest) | — | Free |
+| LLM (M4) | Any OpenAI-compatible endpoint, free tier: OpenRouter `:free` models or NVIDIA NIM | model id in config | Writes alert text from a fact sheet; a checker rejects anything not in the facts; template fallback |
 | Scheduling (M4) | GitHub Actions | — | Free for public repos |
 | Tests | pytest, dbt data tests, dbt unit tests | — | See §9 |
 
@@ -106,6 +106,14 @@ signal-filtering-gtm/
 │   │   ├── gold/                # date spine, daily scores, alerts, baselines
 │   │   └── */schema.yml         # data tests + unit tests
 │   └── tests/                   # singular tests (point-in-time, no labels)
+├── engine/
+│   └── alerting.py              # cooldown, score jump, per-AE budget: one implementation for dbt and eval
+├── activation/                  # M4
+│   ├── narrate.py               # fact sheet → LLM (OpenAI-compatible) → checker → template fallback
+│   ├── slack.py                 # Block Kit digest + webhook post
+│   ├── run.py                   # replay clock, collect today's alerts, cache, post once
+│   └── __main__.py              # python -m activation
+├── .github/workflows/           # ci.yml (pytest on push), daily.yml (06:00 UTC weekdays)
 ├── eval/
 │   ├── __main__.py              # python -m eval calibrate | report
 │   ├── metrics.py               # precision, recall, lead time, alerts/AE/week
@@ -405,7 +413,11 @@ Upstream rules:
 | reason | one line for the rep, e.g. `62 · fit A · 3 people · pricing_page, comparison_page, new_sales_leader · 4.2× usual activity · evaluation + team_trial` |
 | top_signals | up to 3 largest contributors (≥ 0.5 points), e.g. `pricing_page, new_sales_leader, comparison_page` |
 
-**`engine_alerts`**: profile (`precise` / `broad`), is_active, account_id, alert_date, owner_ae_id, engine_score, tier, top_signals, reason. Both profiles are always written; `is_active` marks the one activation sends to reps.
+**`alert_candidates`** (dbt Python model, M4): every alerting decision per profile: account_id, score_date, status (`alerted` / `cooldown` / `deferred` / `dropped` / `expired`), kind (`entry` / `jump` / `deferred`), engine_score, owner_ae_id. Built by `engine/alerting.py`.
+
+**`engine_alerts`**: profile (`precise` / `broad`), is_active, account_id, alert_date, owner_ae_id, engine_score, tier, alert_kind, top_signals, reason. The `alerted` rows of `alert_candidates`; `is_active` marks the profile activation sends to reps.
+
+**`alert_context`** (M4): the fact sheet for each alert: company, fit, score, 14-day people (name, title, seniority, what each did), anonymous visitors, signal counts by stage, combos, triggers in the last 90 days. The only facts the LLM may use.
 
 **`int_pattern_metrics`** (M2): per account × date: 14-day people/sources, spike ratio, and the four multipliers.
 
@@ -449,7 +461,7 @@ Upstream rules:
 
 `sdr_job_post` does not decay while the post is open; its 14-day half-life starts at `closed_at`. Email opens are stored but weigh 0 (Apple Mail Privacy Protection loads tracking pixels automatically).
 
-`scoring_params.csv`: `sim_start`, `eval_start`, `eval_end`, `warmup_days` (28), `lookback_days` (180), `bot_events_per_hour` (30), `max_open_job_posts` (3), `rearm_days` (14), `capacity_per_week` (50), `warm_ratio` (0.5), `watch_ratio` (0.25), `no_bofu_multiplier` (0.6), `spike_min_people` (2), thresholds written by calibration (`engine_threshold_precise` / `_broad` / `_capacity`, `points_threshold_precise` / `_broad` / `_capacity`, `engine_m1_threshold`), and **`active_profile`** (`precise` or `broad`, default `broad`): the team-level setting for which profile reaches reps. Calibration never changes `active_profile`.
+`scoring_params.csv`: `sim_start`, `eval_start`, `eval_end`, `warmup_days` (28), `lookback_days` (180), `bot_events_per_hour` (30), `max_open_job_posts` (3), alert rules `cooldown_days` (14), `jump_ratio` (1.5), `jump_min_days` (3), `ae_daily_budget` (2), `ae_weekly_budget` (10), `defer_days` (3), `replay_launch_date`, `capacity_per_week` (50), `warm_ratio` (0.5), `watch_ratio` (0.25), `no_bofu_multiplier` (0.6), `spike_min_people` (2), thresholds written by calibration (`engine_threshold_precise` / `_broad` / `_capacity`, `points_threshold_precise` / `_broad` / `_capacity`, `engine_m1_threshold`), and **`active_profile`** (`precise` or `broad`, default `broad`): the team-level setting for which profile reaches reps. Calibration never changes `active_profile`.
 
 `pattern_multipliers.csv` (M2): breadth / sources / spike bands as `[min_value, max_value)` → value. `combo_rules.csv` (M2): combo, window_days, bonus.
 
@@ -516,22 +528,31 @@ Two changes from the plan, made before any M2 results were seen:
 
 Trigger combos need engagement: triggers alone never earn a bonus, which keeps `trigger_only` accounts quiet.
 
-### 7.5 Tiers and alerts
+### 7.5 Tiers and alerts (M4 rules)
 
 ```mermaid
 flowchart TD
     S["engine_score for account on day d"] --> X{"Excluded?<br/>customer · competitor · open deal<br/>do-not-contact · fit D"}
     X -->|yes| DROP["No alert"]
-    X -->|no| T{"score ≥ T?"}
-    T -->|no| TIER["Tier only:<br/>Warm ≥ 0.5T · Watch ≥ 0.25T<br/>(visible in app, no ping)"]
-    T -->|yes| E{"Was the score below T yesterday<br/>and no alert in the last 14 days?"}
-    E -->|no| HOLD["Still Hot, no new ping"]
-    E -->|yes| AL["Alert to owner AE<br/>with top signals"]
+    X -->|no| T{"score ≥ T (Hot)?"}
+    T -->|no| TIER["Tier only: Warm ≥ 0.5T · Watch ≥ 0.25T<br/>(visible in app, no ping)"]
+    T -->|yes| E{"Entered Hot today?"}
+    E -->|yes| C{"Alerted in the last 14 days?"}
+    C -->|no| CAND["Candidate (entry)"]
+    C -->|yes| J
+    E -->|no| J{"Score ≥ 1.5 × score at last alert,<br/>at least 3 days ago?"}
+    J -->|yes| CANDJ["Candidate (jump)"]
+    J -->|no| Q{"Waiting in the deferral queue?"}
+    Q -->|yes, ≤ 3 days| CANDQ["Candidate (deferred)"]
+    Q -->|no| HOLD["No new ping"]
+    CAND & CANDJ & CANDQ --> B{"AE budget left?<br/>2 per day · 10 per week<br/>ranked by score"}
+    B -->|yes| AL["Alert to owner AE"]
+    B -->|no| DEF["Deferred: retried while Hot for up to 3 days, then dropped"]
 ```
 
-- **Hot** = score ≥ T. Only Hot pings.
-- **Alert on entry:** an account alerts on the first day it crosses T, then re-arms after 14 days. (M3 replaces this with the full cooldown + score-jump override and per-AE budget.)
-- **Hand-raises** (demo requests) bypass scoring and are routed the next day; reported separately.
+- Rules live in `engine/alerting.py` (one implementation). dbt runs it in the Python model `alert_candidates`; calibration and the report run the same function, so simulated and real alerts always agree (tests T-C1/T-C2).
+- With no budget and no jump, the rules reduce exactly to M1's alert-on-entry with a 14-day re-arm (tested).
+- **Hand-raises** (demo requests) bypass scoring and are routed the next day; the digest lists them first.
 
 ### 7.6 Threshold: capacity is a ceiling, precision decides
 
@@ -581,6 +602,10 @@ Both use the same exclusions as the engine, so the comparison isolates the scori
 Rows: per-event pings, static points @ capacity, static points @ dev F1, engine @ capacity, engine (deployed). Columns: alerts, alerts/AE/week, busiest week, precision (alerts), precision (accounts), recall, median lead time. Plus a hard-negative table and the list of positives the engine missed.
 
 `make m1` runs the whole sequence below (~40 s on an M4).
+
+### 8.4 M4 alerting results (holdout)
+
+The thresholds did not move after the M4 rules. Broad now sends 67 alerts (44 before): the extra ones are score-jump re-alerts on accounts already flagged, mostly real buyers, so alert-level precision rose from 41% to 55% while account precision (48.6%) and recall (68%) stayed the same. The per-AE budget never binds at this volume (0 deferred); at the label-free capacity threshold it holds the busiest week at exactly 50 alerts (5 AEs × 10).
 
 ### 8.3 Run order
 
@@ -686,9 +711,24 @@ T-P1 (point-in-time) now covers the M2 score, including time-aware people counts
 | Pages | every page renders with no exception and no Streamlit "magic" object printed (AppTest) |
 | Accept click | clicking Accept records feedback |
 
-### 9.8 Later milestones
+### 9.8 M4 (pytest + dbt)
 
-- **M4:** Claude prompt contract test: the reason text only mentions signals present in the input facts (string check), falls back to the template on API error; Slack payload snapshot test; dry-run without webhook.
+| Test | Check |
+|---|---|
+| `tests/test_alerting.py` | entry, cooldown and re-arm, jump after min days, daily and weekly budget per AE, deferral then drop / expiry, Monday reset, account order does not matter, equals M1's rule with budget and jump off |
+| dbt `assert_ae_budget_respected` | no AE over the daily or weekly budget, either profile |
+| dbt `assert_one_alert_per_account_day`, `assert_every_alert_has_context` | alert table integrity; every alert has a fact sheet |
+| dbt unit test `t_u8_engine_alerts_keeps_only_alerted` | only `alerted` decisions become alerts; `is_active` follows config |
+| `tests/test_activation.py` checker | accepts grounded output; rejects unknown person ids, numbers and names not in the facts, malformed fields |
+| fallbacks | no model configured, unparseable reply, rejected reply, API error → template |
+| template | leads with high-intent signals, contacts the most senior active person |
+| Slack | mrkdwn escaping, demo-request section, jump marker, app links, quiet-day message |
+| replay clock | walks the 91-day window and loops |
+| daily run | dry run writes the digest and posts nothing; posts once, skips a repeat, re-posts with `--force`; model results are cached |
+| truth wall | activation code never reads the labels |
+
+### 9.9 Later milestones
+
 - **M5:** HubSpot client tested against recorded responses; idempotent re-push (same day twice → no duplicates).
 
 ---
@@ -700,7 +740,7 @@ T-P1 (point-in-time) now covers the M2 score, including time-aware people counts
 | **M1** ✅ | Generator, bronze/silver/gold, decayed base score, fit gate, exclusions, alert-on-entry, both baselines, calibration, eval report | §9 M1 tests pass; `docs/results.md` has dev + holdout tables |
 | M2 ✅ | Breadth, sources, spike, high-intent gate, combos, rolling-hour bot window, time-aware people counts, reasons | Holdout: hammerer and binger alerts drop vs M1 (met); at equal alert budgets M2 recall ≥ M1 (met). At each method's own dev-F1 threshold recall dropped 60% → 52% (see §13) |
 | M3 ✅ | Streamlit app: overview (methods, profiles, trade-off curve), alert feed with accept/dismiss, account deep-dive (score history, breakdown, decay, timeline), tuning sandbox, settings (active profile + audit) | Pages load from read-only DB; AppTest smoke tests pass |
-| M4 | Cooldown + per-AE budget, Claude reasons (top N only), Slack digest, GitHub Actions daily run | Daily run posts a digest; reasons cite only real signals |
+| M4 ✅ | Cooldown + jump override + per-AE budget, LLM explanations (OpenAI-compatible free tier, checker, template fallback), Slack webhook digest, GitHub Actions CI + daily replay run | Daily run builds and (with secrets) posts a digest; explanations cite only facts; tests pass in CI |
 | M5 | HubSpot free sync (score, tier, reason as company properties; exclusions read back) | Idempotent push, dry-run mode |
 | M6 | README write-up: architecture, trade-offs (batch over streaming, synthetic limits), results | Portfolio-ready |
 | Later | Outreach-response model (post-outreach scoring), persona EV analysis, backtest lift per signal, Reflex migration, optional Databricks port | — |
@@ -792,3 +832,31 @@ What it shows:
 - Filling capacity is still the wrong goal: at the capacity threshold M2's precision falls to 4.7%.
 
 **Decision (29 Oct 2026):** keep both profiles. Both thresholds are chosen on dev; the F2 profile was added after the first M2 holdout read, and that is stated here. `active_profile = broad` by default; the app gets an explore toggle and a separate, logged active setting (M3).
+
+---
+
+## 14. Daily digest (M4): how it runs and how to switch it on
+
+```
+GitHub Actions 06:00 UTC weekdays (or Run workflow)
+  generate holdout world → dbt build (all tests; stops on failure)
+  → python -m activation: replay day → today's active alerts + demo requests
+  → explanation per alert (cache → LLM → checker → template) → Slack digest (or dry-run file)
+```
+
+- **Replay clock.** The synthetic world is fixed, so each run treats one day of the 13-week window as "today": `eval_start + (days since replay_launch_date mod 91)`. Slack walks through the quarter a day at a time. `--as-of` picks a day by hand.
+- **Truth wall.** Activation reads the warehouse read-only and never touches the labels; the digest shows only what a real team would know.
+- **State.** Narrative cache and post log go to `data/app_state.duckdb` (never the warehouse), so the app and activation never fight over the lock. GitHub runners start empty, so in CI the cache and log live for one run (the replay clock posts each day once). Persisting them needs a hosted store (MotherDuck free tier), later.
+- **Never double-post.** A day is posted once per profile and webhook unless `--force`.
+
+**To switch it on** (repo Settings → Secrets and variables → Actions):
+
+| Kind | Name | Value |
+|---|---|---|
+| Secret | `SLACK_WEBHOOK_URL` | an incoming-webhook URL for the digest channel |
+| Secret | `LLM_API_KEY` | OpenRouter or NVIDIA NIM API key |
+| Variable | `LLM_BASE_URL` | `https://openrouter.ai/api/v1` or `https://integrate.api.nvidia.com/v1` |
+| Variable | `LLM_MODEL` | a model id from the provider's free catalog |
+| Variable (optional) | `APP_BASE_URL` | where the app is hosted, for account links |
+
+Without them the workflow still runs: template explanations, dry-run digest uploaded as an artifact. Free tiers are for prototyping, and free endpoints may log prompts: fine for synthetic data, not for real customer data.

@@ -58,3 +58,11 @@ if len(fb):
     st.dataframe(fb, hide_index=True, use_container_width=True)
 else:
     st.caption("No feedback yet.")
+
+st.subheader("Daily digest runs")
+st.caption("Each run of `python -m activation` (locally or in GitHub Actions): the replayed day, what was sent and how explanations were made.")
+runs = state.activation_log()
+if len(runs):
+    st.dataframe(runs, hide_index=True, use_container_width=True)
+else:
+    st.caption("No digest runs yet.")

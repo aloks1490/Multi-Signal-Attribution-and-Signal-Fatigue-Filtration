@@ -148,7 +148,7 @@ def threshold_curve(db: str | Path) -> pd.DataFrame:
         p = load_params(con)
         win = window_from(p, N_AES)
         truth = con.execute("select * from labels.account_truth").df()
-        sim = EngineSim(con, int(p["rearm_days"]))
+        sim = EngineSim(con)
     rows = []
     for t in sim.candidates()[::4]:
         s = summarize(sim.alerts(t), truth, win)
@@ -161,7 +161,7 @@ def alerts_at_threshold(db: str | Path, threshold: float) -> dict:
         p = load_params(con)
         win = window_from(p, N_AES)
         truth = con.execute("select * from labels.account_truth").df()
-        alerts = EngineSim(con, int(p["rearm_days"])).alerts(threshold)
+        alerts = EngineSim(con).alerts(threshold)
     return summarize(alerts, truth, win)
 
 

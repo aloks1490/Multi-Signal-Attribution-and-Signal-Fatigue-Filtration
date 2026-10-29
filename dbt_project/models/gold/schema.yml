@@ -14,6 +14,16 @@ models:
         data_tests:
           - accepted_values: {arguments: {values: ['A', 'B', 'C', 'D']}}
 
+  - name: alert_candidates
+    description: Every alerting decision per profile (engine/alerting.py).
+    columns:
+      - name: status
+        data_tests:
+          - accepted_values: {arguments: {values: ['alerted', 'cooldown', 'deferred', 'dropped', 'expired']}}
+      - name: kind
+        data_tests:
+          - accepted_values: {arguments: {values: ['entry', 'jump', 'deferred']}}
+
   - name: engine_alerts
     columns:
       - name: profile
@@ -101,41 +111,28 @@ unit_tests:
         - {account_id: many, score_date: "2026-07-01", trigger_type: sdr_job_post, contribution: 9.0, n_events: 3}
         - {account_id: funded, score_date: "2026-07-01", trigger_type: funding_round, contribution: 2.0, n_events: 1}
 
-  - name: t_u8_alert_on_entry_with_rearm
-    description: >
-      precise (threshold 10): crosses on day 3 (alert), stays hot to day 10, drops, re-crosses day 20 (alert, 17 days
-      later), re-crosses day 23 (no alert, only 3 days later). broad (threshold 4): hot from day 1, alerts once.
-      Only the active profile (broad) is flagged is_active.
+  - name: t_u8_engine_alerts_keeps_only_alerted
+    description: Only "alerted" decisions reach engine_alerts; is_active follows active_profile; the reason comes from the day's score row.
     model: engine_alerts
     given:
+      - input: ref('alert_candidates')
+        rows:
+          - {profile: broad, account_id: a1, score_date: "2026-07-03", status: alerted, kind: entry, engine_score: 40, owner_ae_id: ae_1}
+          - {profile: broad, account_id: a2, score_date: "2026-07-03", status: deferred, kind: entry, engine_score: 30, owner_ae_id: ae_1}
+          - {profile: precise, account_id: a1, score_date: "2026-07-05", status: alerted, kind: jump, engine_score: 80, owner_ae_id: ae_1}
+          - {profile: precise, account_id: a3, score_date: "2026-07-05", status: cooldown, kind: entry, engine_score: 90, owner_ae_id: ae_2}
       - input: ref('account_daily_scores')
-        format: sql
-        rows: |
-          select 'a1' as account_id, cast(date '2026-07-01' + cast(i - 1 as integer) as date) as score_date,
-                 0.0 as activity_score, 0.0 as trigger_score, 0.0 as combo_bonus, 'A' as fit_grade, 1.0 as fit_multiplier,
-                 0 as people_14d, 0 as bofu_people_14d, 0 as sources_14d, 0.0 as spike_ratio,
-                 1.0 as m_breadth, 1.0 as m_sources, 1.0 as m_spike, 1.0 as m_gate,
-                 cast(null as varchar) as combos, 'pricing_page' as top_signals, 0.0 as engine_score_m1,
-                 case when i between 3 and 10 or i = 20 or i = 23 then 20.0 else 5.0 end as engine_score,
-                 'r' as reason
-          from range(1, 26) t(i)
-      - input: ref('account_exclusions')
         rows:
-          - {account_id: a1, excluded: false, reason: null}
-      - input: ref('stg_accounts')
-        rows:
-          - {account_id: a1, owner_ae_id: ae_1}
+          - {account_id: a1, score_date: "2026-07-03", top_signals: pricing_page, reason: "40 · fit A"}
+          - {account_id: a1, score_date: "2026-07-05", top_signals: pricing_page, reason: "80 · fit A"}
+          - {account_id: a2, score_date: "2026-07-03", top_signals: blog_visit, reason: "30 · fit B"}
       - input: ref('scoring_params')
         rows:
-          - {param: engine_threshold_precise, value: "10"}
-          - {param: engine_threshold_broad, value: "4"}
-          - {param: rearm_days, value: "14"}
-          - {param: active_profile, value: "broad"}
+          - {param: active_profile, value: broad}
     expect:
       rows:
-        - {profile: precise, is_active: false, account_id: a1, alert_date: "2026-07-03"}
-        - {profile: precise, is_active: false, account_id: a1, alert_date: "2026-07-20"}
-        - {profile: broad, is_active: true, account_id: a1, alert_date: "2026-07-01"}
+        - {profile: broad, is_active: true, account_id: a1, alert_date: "2026-07-03", alert_kind: entry, reason: "40 · fit A"}
+        - {profile: precise, is_active: false, account_id: a1, alert_date: "2026-07-05", alert_kind: jump, reason: "80 · fit A"}
 
   - name: t_u9_pattern_multipliers
     description: >

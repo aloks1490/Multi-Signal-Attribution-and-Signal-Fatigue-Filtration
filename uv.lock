@@ -916,7 +916,7 @@ wheels = [
 [[package]]
 name = "signal-engine"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "dbt-core" },
     { name = "dbt-duckdb" },
@@ -925,6 +925,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "plotly" },
+    { name = "requests" },
     { name = "streamlit" },
 ]
 
@@ -942,6 +943,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "plotly", specifier = ">=7.1.0" },
+    { name = "requests", specifier = ">=2.31" },
     { name = "streamlit", specifier = ">=1.66.1" },
 ]
 

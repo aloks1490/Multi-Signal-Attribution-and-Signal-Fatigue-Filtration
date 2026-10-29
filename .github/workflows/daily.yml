@@ -1,0 +1,64 @@
+name: Daily digest
+
+# Rebuilds the holdout world, scores it, explains today's alerts and posts one Slack digest.
+# The data is synthetic and fixed, so each run replays one day of the 13-week window (activation/run.py replay_date).
+on:
+  schedule:
+    - cron: "0 6 * * 1-5"  # 06:00 UTC, weekdays
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: "Day to replay (YYYY-MM-DD). Empty = the replay clock."
+        required: false
+        default: ""
+      dry_run:
+        description: "Build the digest but do not post it"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Any OpenAI-compatible endpoint (OpenRouter, NVIDIA NIM). Without a key the template is used.
+      LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      # Without a webhook the run is a dry run.
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync
+      - name: Generate the holdout world
+        run: make generate NAME=holdout SEED=7
+      - name: Score (dbt build runs every data and unit test; a failure stops here, before anything is posted)
+        run: make build NAME=holdout
+      - name: Explain and post
+        env:
+          AS_OF: ${{ inputs.as_of }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=(--db data/holdout.duckdb)
+          if [ -n "$AS_OF" ]; then args+=(--as-of "$AS_OF"); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          uv run python -m activation "${args[@]}"
+      - name: Keep the digest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest
+          path: out/
+          if-no-files-found: ignore

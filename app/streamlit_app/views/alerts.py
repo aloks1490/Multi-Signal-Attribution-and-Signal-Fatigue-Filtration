@@ -1,4 +1,5 @@
 """Alert feed: what an AE sees, with reasons and accept/dismiss."""
+import json
 import sys
 from datetime import timedelta
 from pathlib import Path
@@ -27,7 +28,9 @@ ae = None if ae == "All" else ae
 
 feed = q.alert_feed(ctx["db"], prof, as_of, days=days, ae=ae)
 fb = state.feedback()
-st.caption(f"{len(feed)} alerts in the last {days} days. Each alert fires once, when an account first crosses the threshold.")
+stories = state.narratives()
+st.caption(f"{len(feed)} alerts in the last {days} days. An account alerts when it crosses the threshold, then stays quiet for "
+           "the cooldown unless its score jumps; each AE has a daily and weekly budget.")
 
 for _, a in feed.iterrows():
     done = fb[(fb.account_id == a.account_id) & (fb.alert_date.dt.date == a.alert_date.date()) & (fb.profile == prof)] if len(fb) else fb
@@ -35,6 +38,12 @@ for _, a in feed.iterrows():
         left, right = st.columns([5, 2])
         left.markdown(f"**{a.company_name}** · {a.account_id} · fit {a.fit_grade} · {a.owner_ae_id} · {a.alert_date:%a %d %b}")
         left.markdown(a.reason)
+        story = stories[(stories.account_id == a.account_id) & (stories.alert_date.dt.date == a.alert_date.date())] if len(stories) else stories
+        if len(story):
+            n = json.loads(story.iloc[0].narrative)
+            label = "written by the model" if story.iloc[0].source == "llm" else "template"
+            left.markdown(f"**{n['headline']}**  \n" + "  \n".join(f"• {b}" for b in n["why_now"]) + f"  \n_Angle:_ {n['angle']}")
+            left.caption(f"Explanation: {label}")
         if len(done):
             right.success(f"{done.iloc[0].outcome} by {done.iloc[0].user_name}")
         else:

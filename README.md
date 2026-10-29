@@ -27,7 +27,10 @@ make setup     # install dependencies
 make m1        # dev world → dbt → calibrate → holdout world → docs/results.md (~50 s)
 make test      # pytest: generator, metrics, calibration, truth wall, point-in-time, app
 make app       # Streamlit app on http://localhost:8501
+uv run python -m activation --as-of 2026-08-03 --dry-run   # build one day's Slack digest into out/
 ```
+
+**Daily digest (M4).** `.github/workflows/daily.yml` rebuilds the world at 06:00 UTC on weekdays, applies cooldown and a per-AE budget, has an LLM (any OpenAI-compatible free tier: OpenRouter or NVIDIA NIM) explain each alert from a fact sheet, rejects anything not in the facts, and posts one Slack message. Without secrets it runs as a dry run. Setup: [docs/implementation.md §14](docs/implementation.md).
 
 The app has five pages: **Overview** (pings vs static points vs engine, precise/broad trade-off), **Alert feed** (reasons, accept/dismiss), **Account deep-dive** (score history, step-by-step breakdown, decay, who did what), **Tuning sandbox** (edit weights, rebuild on a copy of dev, compare) and **Settings** (which profile reps receive, with an audit log).
 
@@ -47,6 +50,8 @@ generator/     synthetic world (the only code that knows the truth)
 dbt_project/   staging → silver → gold models, seeds = tuning config
 eval/          calibration, metrics, results report (reads truth labels)
 app/           Streamlit app; queries.py and charts.py are UI-free for the later Reflex port
+engine/        alerting rules (cooldown, score jump, per-AE budget)
+activation/    explanations, Slack digest, daily run
 tests/         pytest suite
 docs/          implementation spec and results
 ```
