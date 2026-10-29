@@ -55,6 +55,16 @@ def test_checker_rejects_invented_content(mutate, expected):
     assert any(expected in p for p in narrate.check(out, FACTS))
 
 
+def test_checker_accepts_reworded_dates_but_not_new_ones():
+    ok = json.loads(json.dumps(GOOD))
+    ok["why_now"][0] = "A new VP Sales started on August 1"  # facts hold 2026-08-01
+    assert narrate.check(ok, FACTS) == []
+    bad = json.loads(json.dumps(GOOD))
+    bad["why_now"][0] = "A new VP Sales started on March 17"
+    problems = narrate.check(bad, FACTS)
+    assert any("17" in p for p in problems) and any("March" in p for p in problems)
+
+
 def test_parse_handles_fences_and_prose():
     assert narrate.parse("Sure! ```json\n{\"a\": 1}\n``` hope that helps") == {"a": 1}
 

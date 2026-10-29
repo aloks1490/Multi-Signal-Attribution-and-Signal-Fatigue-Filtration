@@ -136,6 +136,30 @@ def parse(text: str) -> dict:
 
 # ---------- checker ----------
 
+MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october",
+          "november", "december"]
+
+
+def _fact_numbers(facts: dict) -> set[str]:
+    """Numbers in the facts plus harmless rewordings: '09' → '9', '4.0' → '4', and the parts of ISO dates."""
+    nums = _numbers(facts)
+    out = set(nums)
+    for n in nums:
+        out.add(str(int(float(n))) if float(n) == int(float(n)) else n)
+    for y, m, d in re.findall(r"(\d{4})-(\d{2})-(\d{2})", json.dumps(facts)):
+        out |= {y, str(int(m)), str(int(d))}
+    return out
+
+
+def _fact_words(facts: dict) -> set[str]:
+    """Words in the facts plus month names of the dates they contain ('2026-06-09' allows 'June' and 'Jun')."""
+    words = _words(facts)
+    for _, m, _ in re.findall(r"(\d{4})-(\d{2})-(\d{2})", json.dumps(facts)):
+        name = MONTHS[int(m) - 1]
+        words |= {name, name[:3]}
+    return words
+
+
 def _numbers(value) -> set[str]:
     return set(re.findall(r"\d+(?:\.\d+)?", json.dumps(value, ensure_ascii=False)))  # ASCII escapes like \u00b7 hold digits
 
@@ -166,10 +190,10 @@ def check(out: dict, facts: dict) -> list[str]:
 
     text = {"headline": out["headline"], "why_now": out["why_now"], "angle": out["angle"],
             "why": [c.get("why", "") for c in contacts]}
-    invented_numbers = _numbers(text) - _numbers(facts) - {"1", "2", "3", "14", "90"}
+    invented_numbers = _numbers(text) - _fact_numbers(facts) - {"1", "2", "3", "14", "90"}
     if invented_numbers:
         problems.append(f"numbers not in facts: {sorted(invented_numbers)}")
-    known = _words(facts) | COMMON_WORDS
+    known = _fact_words(facts) | COMMON_WORDS
     for sentence in [out["headline"], *out["why_now"], out["angle"], *text["why"]]:
         words = re.findall(r"[A-Za-z][A-Za-z&'.-]+", sentence)
         for w in words[1:]:  # the first word of a sentence is capitalised anyway
