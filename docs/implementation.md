@@ -858,5 +858,6 @@ GitHub Actions 06:00 UTC weekdays (or Run workflow)
 | Variable | `LLM_BASE_URL` | `https://openrouter.ai/api/v1` or `https://integrate.api.nvidia.com/v1` |
 | Variable | `LLM_MODEL` | a model id from the provider's free catalog |
 | Variable (optional) | `APP_BASE_URL` | where the app is hosted, for account links |
+| Variable (optional) | `LLM_EXTRA_BODY` | JSON merged into each request for model-specific switches. Reasoning models (e.g. NVIDIA Nemotron 3) think by default and can spend the whole token budget before answering; turn that off with `{"chat_template_kwargs": {"enable_thinking": false}}` |
 
-Without them the workflow still runs: template explanations, dry-run digest uploaded as an artifact. Free tiers are for prototyping, and free endpoints may log prompts: fine for synthetic data, not for real customer data.
+Each run logs one line per alert: `explain <account>: llm` or `template (<reason>)`, so fallbacks can be diagnosed from the Actions log. Without them the workflow still runs: template explanations, dry-run digest uploaded as an artifact. Free tiers are for prototyping, and free endpoints may log prompts: fine for synthetic data, not for real customer data.
