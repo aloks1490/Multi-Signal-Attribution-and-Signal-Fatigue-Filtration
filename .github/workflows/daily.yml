@@ -15,6 +15,10 @@ on:
         description: "Build the digest but do not post it"
         type: boolean
         default: true
+      force:
+        description: "Post even if this day was already posted (e.g. to re-send a corrected digest)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -51,10 +55,12 @@ jobs:
         env:
           AS_OF: ${{ inputs.as_of }}
           DRY_RUN: ${{ inputs.dry_run }}
+          FORCE: ${{ inputs.force }}
         run: |
           args=(--db data/holdout.duckdb)
           if [ -n "$AS_OF" ]; then args+=(--as-of "$AS_OF"); fi
           if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
           uv run python -m activation "${args[@]}"
       - name: Keep the digest
         if: always()
