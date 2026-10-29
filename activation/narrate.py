@@ -4,6 +4,8 @@ Provider-neutral: any OpenAI-compatible chat endpoint (OpenRouter, NVIDIA NIM, .
     LLM_BASE_URL   e.g. https://openrouter.ai/api/v1 or https://integrate.api.nvidia.com/v1
     LLM_API_KEY
     LLM_MODEL      the provider's model id (free models change often; pick from the provider's catalog)
+    LLM_EXTRA_BODY optional JSON merged into each request for model-specific switches, e.g. to turn off
+                   Nemotron 3's hidden reasoning: {"chat_template_kwargs": {"enable_thinking": false}}
 Without a key or model, or when the model fails or the checker rejects its output, the deterministic
 template is used, so the pipeline never depends on a free endpoint being up.
 """
@@ -47,14 +49,16 @@ class LLMConfig:
     model: str
     timeout: int = 90
     max_tokens: int = 2000  # reasoning models spend part of this on hidden thinking before the answer
+    extra_body: dict | None = None
 
     @classmethod
     def from_env(cls) -> "LLMConfig | None":
         key, model = os.environ.get("LLM_API_KEY"), os.environ.get("LLM_MODEL")
         if not key or not model:
             return None
+        extra = os.environ.get("LLM_EXTRA_BODY", "").strip()
         return cls(os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/"), key, model,
-                   max_tokens=int(os.environ.get("LLM_MAX_TOKENS", "2000")))
+                   max_tokens=int(os.environ.get("LLM_MAX_TOKENS", "2000")), extra_body=json.loads(extra) if extra else None)
 
 
 # ---------- facts ----------
@@ -104,6 +108,7 @@ def call_llm(cfg: LLMConfig, facts: dict) -> str:
         "max_tokens": cfg.max_tokens,
         "messages": [{"role": "system", "content": SYSTEM},
                      {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}],
+        **(cfg.extra_body or {}),
     }
     headers = {"Authorization": f"Bearer {cfg.api_key}", "Content-Type": "application/json"}
     url = f"{cfg.base_url}/chat/completions"

@@ -96,8 +96,47 @@ def test_config_from_env(monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "k")
     monkeypatch.setenv("LLM_MODEL", "m")
     monkeypatch.setenv("LLM_BASE_URL", "https://integrate.api.nvidia.com/v1/")
+    monkeypatch.setenv("LLM_EXTRA_BODY", '{"chat_template_kwargs": {"enable_thinking": false}}')
     cfg = narrate.LLMConfig.from_env()
     assert cfg.base_url == "https://integrate.api.nvidia.com/v1" and cfg.model == "m"
+    assert cfg.extra_body == {"chat_template_kwargs": {"enable_thinking": False}}
+
+
+def test_request_body_carries_extra_switches(monkeypatch):
+    sent = {}
+
+    class Resp:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(GOOD)}}]}
+
+    def fake_post(url, json=None, headers=None, timeout=None):
+        sent.update(json)
+        return Resp()
+
+    monkeypatch.setattr(narrate.requests, "post", fake_post)
+    cfg = narrate.LLMConfig("https://x/v1", "k", "m", extra_body={"chat_template_kwargs": {"enable_thinking": False}})
+    assert narrate.parse(narrate.call_llm(cfg, FACTS)) == GOOD
+    assert sent["chat_template_kwargs"] == {"enable_thinking": False} and sent["model"] == "m"
+
+
+def test_empty_reply_is_reported_with_its_reason(monkeypatch):
+    class Resp:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"finish_reason": "length", "message": {"content": None, "reasoning_content": "..."}}]}
+
+    monkeypatch.setattr(narrate.requests, "post", lambda *a, **k: Resp())
+    with pytest.raises(ValueError, match="finish_reason=length"):
+        narrate.call_llm(CFG, FACTS)
 
 
 # ---------- Slack ----------
