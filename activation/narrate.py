@@ -45,14 +45,16 @@ class LLMConfig:
     base_url: str
     api_key: str
     model: str
-    timeout: int = 45
+    timeout: int = 90
+    max_tokens: int = 2000  # reasoning models spend part of this on hidden thinking before the answer
 
     @classmethod
     def from_env(cls) -> "LLMConfig | None":
         key, model = os.environ.get("LLM_API_KEY"), os.environ.get("LLM_MODEL")
         if not key or not model:
             return None
-        return cls(os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/"), key, model)
+        return cls(os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/"), key, model,
+                   max_tokens=int(os.environ.get("LLM_MAX_TOKENS", "2000")))
 
 
 # ---------- facts ----------
@@ -99,7 +101,7 @@ def call_llm(cfg: LLMConfig, facts: dict) -> str:
     body = {
         "model": cfg.model,
         "temperature": 0.2,
-        "max_tokens": 600,
+        "max_tokens": cfg.max_tokens,
         "messages": [{"role": "system", "content": SYSTEM},
                      {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}],
     }
@@ -109,7 +111,13 @@ def call_llm(cfg: LLMConfig, facts: dict) -> str:
     if r.status_code == 400:
         r = requests.post(url, json=body, headers=headers, timeout=cfg.timeout)
     r.raise_for_status()
-    return r.json()["choices"][0]["message"]["content"]
+    choice = r.json()["choices"][0]
+    message = choice.get("message") or {}
+    content = message.get("content")
+    if not content:
+        # Reasoning models can use the whole budget thinking and return no answer.
+        raise ValueError(f"empty reply (finish_reason={choice.get('finish_reason')}, message keys={sorted(message)})")
+    return content
 
 
 def parse(text: str) -> dict:
