@@ -25,8 +25,11 @@ Requires [uv](https://docs.astral.sh/uv/). Python 3.12 is pinned in `.python-ver
 ```bash
 make setup     # install dependencies
 make m1        # dev world → dbt → calibrate → holdout world → docs/results.md (~50 s)
-make test      # pytest: generator, metrics, calibration, truth wall, point-in-time
+make test      # pytest: generator, metrics, calibration, truth wall, point-in-time, app
+make app       # Streamlit app on http://localhost:8501
 ```
+
+The app has five pages: **Overview** (pings vs static points vs engine, precise/broad trade-off), **Alert feed** (reasons, accept/dismiss), **Account deep-dive** (score history, step-by-step breakdown, decay, who did what), **Tuning sandbox** (edit weights, rebuild on a copy of dev, compare) and **Settings** (which profile reps receive, with an audit log).
 
 Individual steps:
 
@@ -43,6 +46,7 @@ make report                              # docs/results.md
 generator/     synthetic world (the only code that knows the truth)
 dbt_project/   staging → silver → gold models, seeds = tuning config
 eval/          calibration, metrics, results report (reads truth labels)
+app/           Streamlit app; queries.py and charts.py are UI-free for the later Reflex port
 tests/         pytest suite
 docs/          implementation spec and results
 ```

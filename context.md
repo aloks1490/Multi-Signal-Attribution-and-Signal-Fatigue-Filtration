@@ -173,3 +173,9 @@ Full spec: [docs/implementation.md](docs/implementation.md).
 - Weak spot: 2-person "quiet" buyers (4 of 12 misses).
 - **Decided: keep both thresholds.** precise = best dev F1, broad = best dev F2; dbt writes alerts for both (`profile` column). `active_profile` in scoring_params (default `broad`) decides what reps receive. The frontend (M3) gets an explore toggle (viewer only) and a separate, confirmed and logged active setting. F2 was added after the first holdout read; stated in the docs.
 - Holdout, broad (active): 44 alerts / 48.6% precision / 68% recall (17 of 20 planted buyers). Precise: 16 / 86.7% / 52%.
+
+## M3 (29 Oct 2026)
+
+- Streamlit app (`make app`): Overview, Alert feed, Account deep-dive, Tuning sandbox, Settings. Explore toggle in the sidebar (viewer only); the active profile is changed only in Settings (reason + confirmation, rebuilds `engine_alerts`, audit log in `data/app_state.duckdb`).
+- Built for the Reflex port: `app/queries.py`, `app/charts.py`, `app/state.py`, `app/sandbox.py` have no Streamlit imports; Reflex state handlers can call them unchanged.
+- DuckDB rule that shaped the design: one writer or many readers, so the app opens the warehouse read-only per call and keeps its own state in a separate file.

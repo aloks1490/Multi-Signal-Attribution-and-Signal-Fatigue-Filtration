@@ -3,7 +3,7 @@ ROOT := $(CURDIR)
 DBT := cd dbt_project && uv run dbt
 PROFILE ?= standard
 
-.PHONY: setup generate build calibrate report m1 test clean
+.PHONY: setup generate build calibrate report m1 test app clean
 
 setup:
 	uv sync
@@ -35,6 +35,10 @@ m1:
 
 test:
 	uv run pytest
+
+# Streamlit app on http://localhost:8501 (needs `make m1` first)
+app:
+	uv run streamlit run app/streamlit_app/main.py
 
 clean:
 	rm -rf data dbt_project/target dbt_project/logs

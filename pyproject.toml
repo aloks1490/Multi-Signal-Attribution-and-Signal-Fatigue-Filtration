@@ -10,6 +10,8 @@ dependencies = [
     "pandas>=2.2",
     "dbt-core>=1.10,<1.12",
     "dbt-duckdb>=1.9,<1.11",
+    "streamlit>=1.66.1",
+    "plotly>=7.1.0",
 ]
 
 [dependency-groups]

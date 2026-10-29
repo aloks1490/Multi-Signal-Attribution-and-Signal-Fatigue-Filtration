@@ -1,6 +1,6 @@
 # Signal Engine: Implementation Spec
 
-Status: M1 + M2 built · 29 Oct 2026 · owner: Alok Singh
+Status: M1–M3 built · 29 Oct 2026 · owner: Alok Singh
 
 This is the build reference. [context.md](../context.md) explains *why* the design looks like this; this file says *what* gets built, in what shape, and how we know it works.
 
@@ -112,8 +112,15 @@ signal-filtering-gtm/
 │   ├── calibrate.py             # threshold selection + Python simulations of the alert rules
 │   └── report.py                # writes docs/results.md
 ├── app/                         # M3
-│   ├── queries.py               # frontend-agnostic data access (read-only DuckDB)
-│   └── streamlit_app/           # pages; Reflex app later reuses queries.py
+│   ├── queries.py               # frontend-agnostic data access (read-only, connection per call)
+│   ├── charts.py                # Plotly figures (st.plotly_chart now, rx.plotly later)
+│   ├── state.py                 # app-owned state: feedback, active-profile change + audit log
+│   ├── sandbox.py               # rebuild with edited seeds on a scratch copy of dev
+│   ├── dbt_runner.py            # dbt in a subprocess
+│   └── streamlit_app/
+│       ├── main.py              # st.navigation entry point (make app)
+│       ├── ui.py                # sidebar, caching keyed on warehouse file mtime
+│       └── views/               # overview, alerts, account, sandbox, settings
 ├── tests/
 │   ├── conftest.py              # builds a small-profile DB once per session
 │   ├── test_generator.py
@@ -664,9 +671,23 @@ IDs are referenced in commits and the README. **M1** marks tests built in M1. Ru
 
 T-P1 (point-in-time) now covers the M2 score, including time-aware people counts.
 
-### 9.7 Later milestones
+### 9.7 M3 app (pytest, `tests/test_app.py`)
 
-- **M3:** Streamlit `AppTest` smoke test per page; `app/queries.py` unit tests (shared with Reflex); DB opened read-only.
+| Test | Check |
+|---|---|
+| Breakdown | the step-by-step score breakdown ends exactly at `engine_score` |
+| Overview data | profile summary, weekly alerts, buyers caught, look-alikes |
+| Feed | the feed returns every alert in the window, each with a reason |
+| Decay curve | halves every half-life |
+| No held connections | after a query the warehouse can be opened read-write |
+| Feedback | latest outcome wins; unknown outcomes rejected |
+| Active profile | needs a name and reason; flips `is_active` in a copy; audit row written; repo config untouched |
+| Sandbox | current vs edited compared; an M2-only change leaves M1 identical |
+| Pages | every page renders with no exception and no Streamlit "magic" object printed (AppTest) |
+| Accept click | clicking Accept records feedback |
+
+### 9.8 Later milestones
+
 - **M4:** Claude prompt contract test: the reason text only mentions signals present in the input facts (string check), falls back to the template on API error; Slack payload snapshot test; dry-run without webhook.
 - **M5:** HubSpot client tested against recorded responses; idempotent re-push (same day twice → no duplicates).
 
@@ -678,7 +699,7 @@ T-P1 (point-in-time) now covers the M2 score, including time-aware people counts
 |---|---|---|
 | **M1** ✅ | Generator, bronze/silver/gold, decayed base score, fit gate, exclusions, alert-on-entry, both baselines, calibration, eval report | §9 M1 tests pass; `docs/results.md` has dev + holdout tables |
 | M2 ✅ | Breadth, sources, spike, high-intent gate, combos, rolling-hour bot window, time-aware people counts, reasons | Holdout: hammerer and binger alerts drop vs M1 (met); at equal alert budgets M2 recall ≥ M1 (met). At each method's own dev-F1 threshold recall dropped 60% → 52% (see §13) |
-| M3 | Streamlit app: naive-vs-engine view, account deep-dive (timeline + decay + score breakdown), tuning sandbox, alert feed | Pages load from read-only DB; AppTest smoke tests pass |
+| M3 ✅ | Streamlit app: overview (methods, profiles, trade-off curve), alert feed with accept/dismiss, account deep-dive (score history, breakdown, decay, timeline), tuning sandbox, settings (active profile + audit) | Pages load from read-only DB; AppTest smoke tests pass |
 | M4 | Cooldown + per-AE budget, Claude reasons (top N only), Slack digest, GitHub Actions daily run | Daily run posts a digest; reasons cite only real signals |
 | M5 | HubSpot free sync (score, tier, reason as company properties; exclusions read back) | Idempotent push, dry-run mode |
 | M6 | README write-up: architecture, trade-offs (batch over streaming, synthetic limits), results | Portfolio-ready |
@@ -688,19 +709,19 @@ T-P1 (point-in-time) now covers the M2 score, including time-aware people counts
 
 ## 11. Frontend plan and Reflex migration
 
-### 11.1 Streamlit (M3) pages
+### 11.1 Streamlit (M3) pages, as built
 
-1. **Naive vs engine:** the same 13 weeks under the three methods: weekly alert counts and which positives each caught.
-2. **Account deep-dive:** event timeline by person, each signal's decay curve, score breakdown (activity → × multipliers → + triggers → × fit).
-3. **Tuning sandbox:** edit weights / half-lives → writes a scratch copy of the seeds → re-runs the gold models (seconds on DuckDB) → shows the new metrics next to the saved ones. dbt stays the only place scoring logic lives.
-4. **Alert feed:** what an AE sees today, with reason and accept/dismiss (stored in `app_feedback`).
-5. **Explore view vs active setting:**
-   - *Explore:* a toggle between **Precise** ("fewer, surer alerts") and **Broad** ("catch more buyers"), with each profile's alert count, precision and recall shown beside it, and optionally a slider across the whole threshold curve with F1 and F2 marked. Changing it changes only what the viewer sees.
-   - *Active setting:* a separate, deliberate control that sets `active_profile` (who gets pinged). Changing it should ask for confirmation and be logged (who, when, from → to).
+Run with `make app` (http://localhost:8501). The sidebar holds the data source (holdout / dev), the **Explore** profile toggle (viewer only) and the viewer's name (used for feedback and the audit log).
+
+1. **Overview:** headline metrics for the explored profile vs per-event pings; the two profiles side by side (exploring / reps receive this); a threshold slider over the precision/recall curve with the F1 and F2 presets marked; weekly alerts per method (log scale); every method's numbers; days of warning per real buyer; look-alikes that fooled each method.
+2. **Alert feed:** alerts for the explored profile with a warning when it differs from the active one; date, AE and window filters; reason line; Accept / Dismiss (stored in `data/app_state.duckdb`); Hot / Warm / Watch tiers for the day (only Hot pings).
+3. **Account deep-dive:** firmographics, fit, exclusion and (evaluation only) synthetic truth; M2 and M1 score over time with both thresholds, alert markers and the meeting date; the score built step by step (waterfall) for any day; signal contributions that day; decay curves of the biggest signals; who did what (timeline by person, coloured by funnel stage). The account is in the URL (`?account=acc_01865`), so views can be shared.
+4. **Tuning sandbox:** edit weights, half-lives, multipliers, combo bonuses, the gate and the spike rule; rebuild silver and gold on a scratch copy of **dev** (~20–30 s); compare current vs edited at equal alert budgets; download edited CSVs. Real seeds are never written.
+5. **Settings:** the active profile with each profile's numbers; change needs a reason and a confirmation tick, rewrites `active_profile` in `scoring_params.csv`, rebuilds `engine_alerts` in every warehouse, and logs who / when / from → to / why. Rep feedback is listed here too.
 
 ### 11.2 Keeping Reflex cheap later
 
-- All data access lives in `app/queries.py`: plain functions that open DuckDB **read-only** and return pandas DataFrames or dicts. Streamlit pages and the future Reflex `State` classes call the same functions; nothing in `queries.py` imports Streamlit.
+- All data access lives in `app/queries.py`: plain functions that open DuckDB **read-only per call** (never a held connection, so dbt can write while the app runs) and return pandas DataFrames or dicts. Streamlit pages and the future Reflex `State` classes call the same functions; nothing in `queries.py` imports Streamlit.
 - No Streamlit-only features in the data layer (no `st.cache_data` inside queries; cache at the page level).
 - Charts built as Plotly figures in one module (`app/charts.py`); Reflex renders Plotly figures through `rx.plotly`, so chart code moves over unchanged.
 
