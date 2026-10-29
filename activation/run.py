@@ -82,6 +82,8 @@ def explain(alerts: list[dict], cfg: narrate.LLMConfig | None, caller: Callable 
             continue
         n = narrate.narrate(facts, cfg if i < MAX_NARRATED else None, caller)
         state.save_narrative(a["account_id"], a["alert_date"], h, n.source, n.model, n.content, n.problems)
+        # One line per alert in the run log (CI keeps no state, so this is how a fallback gets diagnosed).
+        print(f"explain {a['account_id']}: {n.source}" + (f" ({'; '.join(n.problems)[:300]})" if n.problems else ""))
         a["narrative"] = n.content
         counts[n.source] += 1
     return counts
