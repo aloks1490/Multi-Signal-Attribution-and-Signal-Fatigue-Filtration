@@ -1,5 +1,7 @@
 -- Every first-party event tied to an account and a person where possible.
--- known_at = when the warehouse could first attribute the event (later than occurred_at only for cookie stitching).
+-- known_at        = when the warehouse could first attribute the event to its account (later than occurred_at only for cookie stitching).
+-- observed_key    = the identity visible on the event itself (contact for emails, anon:<cookie> otherwise). Never uses later data.
+-- person_key      = best identity once all stitching is known; usable for a score date only after person_known_at.
 with contacts as (
     select * from {{ ref('stg_contacts') }}
 ),
@@ -42,6 +44,11 @@ web_resolved as (
         coalesce(email_contact_id, stitched_contact_id) as contact_id,
         coalesce(email_account_id, ip_account_id, stitched_account_id) as account_id,
         coalesce(email_contact_id, stitched_contact_id, 'anon:' || anonymous_id) as person_key,
+        coalesce(email_contact_id, 'anon:' || anonymous_id) as observed_key,
+        case
+            when stitched_contact_id is not null and email_contact_id is null then greatest(occurred_at, stitched_at)
+            else occurred_at
+        end as person_known_at,
         case
             when email_contact_id is not null then 'email'
             when ip_account_id is not null then 'ip'
@@ -68,6 +75,8 @@ email_resolved as (
         c.contact_id,
         coalesce(c.account_id, a.account_id) as account_id,
         coalesce(c.contact_id, 'email:' || e.email) as person_key,
+        coalesce(c.contact_id, 'email:' || e.email) as observed_key,
+        e.occurred_at as person_known_at,
         case when c.contact_id is not null then 'email' when a.account_id is not null then 'email_domain' end as resolution_method
     from email_events e
     left join contacts c on c.email = e.email

@@ -53,5 +53,7 @@ def test_e1_end_to_end_report(small_db, tmp_path):
     out = tmp_path / "results.md"
     text = report.write({"small": (str(small_db), "test")}, out, n_aes=5)
     assert out.exists()
-    for method in ("Per-event pings", "Static points @ dev F1", "Engine M1"):
+    for method in ("Per-event pings", "Static points precise (F1)", "Engine M1 precise (F1)",
+                   "Engine M2 precise (F1)", "Engine M2 broad (F2)"):
         assert f"| {method} |" in text
+    assert "Equal alert budget" in text

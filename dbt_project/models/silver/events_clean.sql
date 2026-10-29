@@ -1,4 +1,4 @@
--- Scorable engagement and hand-raise events: resolved, bot hours removed, weighted, capped at one per person/type/day.
+-- Scorable engagement and hand-raise events: resolved, bot bursts removed, weighted, capped at one per visitor/type/day.
 with resolved as (
     select *
     from {{ ref('int_events_resolved') }}
@@ -8,9 +8,7 @@ with resolved as (
 not_bot as (
     select r.*
     from resolved r
-    left join {{ ref('int_bot_hours') }} b
-        on b.person_key = r.person_key and b.hour = date_trunc('hour', r.occurred_at)
-    where b.person_key is null
+    anti join {{ ref('int_bot_events') }} b on b.event_id = r.event_id
 ),
 
 weighted as (
@@ -21,7 +19,7 @@ weighted as (
         t.weight,
         t.half_life_days,
         row_number() over (
-            partition by n.person_key, n.event_type, cast(n.occurred_at as date)
+            partition by n.observed_key, n.event_type, cast(n.occurred_at as date)
             order by n.occurred_at, n.event_id
         ) as rn
     from not_bot n
@@ -33,11 +31,14 @@ select
     event_id,
     account_id,
     person_key,
+    observed_key,
+    person_known_at,
     contact_id,
     event_type,
     source,
     occurred_at,
-    known_at,
+    -- Web events wait one hour: bot classification looks 60 minutes ahead.
+    case when source in ('web', 'ads') then greatest(known_at, occurred_at + interval 60 minute) else known_at end as known_at,
     category,
     funnel_stage,
     weight,

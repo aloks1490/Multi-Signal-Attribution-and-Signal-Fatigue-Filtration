@@ -49,48 +49,55 @@ models:
           - accepted_values: {arguments: {values: ['customer', 'competitor', 'open_deal', 'do_not_contact', 'fit_d']}}
 
 unit_tests:
-  - name: t_u4_daily_cap_one_row_per_person_type_day
+  - name: t_u4_daily_cap_one_row_per_visitor_type_day
     model: events_clean
     given:
       - input: ref('int_events_resolved')
-        rows:
-          - {event_id: e1, occurred_at: "2026-07-01 09:00:00", known_at: "2026-07-01 09:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
-          - {event_id: e2, occurred_at: "2026-07-01 09:05:00", known_at: "2026-07-01 09:05:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
-          - {event_id: e3, occurred_at: "2026-07-01 11:00:00", known_at: "2026-07-01 11:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
-          - {event_id: e4, occurred_at: "2026-07-01 15:00:00", known_at: "2026-07-01 15:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
-          - {event_id: e5, occurred_at: "2026-07-01 18:00:00", known_at: "2026-07-01 18:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
-          - {event_id: e6, occurred_at: "2026-07-02 09:00:00", known_at: "2026-07-02 09:00:00", event_type: pricing_page, source: web, contact_id: c1, account_id: a1, person_key: c1, resolution_method: email}
-      - input: ref('int_bot_hours')
         format: sql
-        rows: select cast(null as varchar) as person_key, cast(null as timestamp) as hour, cast(0 as bigint) as events where false
+        rows: |
+          select 'e' || i as event_id,
+                 timestamp '2026-07-01 09:00:00' + to_hours(cast(i as integer)) as occurred_at,
+                 timestamp '2026-07-01 09:00:00' + to_hours(cast(i as integer)) as known_at,
+                 'pricing_page' as event_type, 'web' as source, 'c1' as contact_id, 'a1' as account_id,
+                 'c1' as person_key, 'c1' as observed_key,
+                 timestamp '2026-07-01 09:00:00' + to_hours(cast(i as integer)) as person_known_at, 'email' as resolution_method
+          from range(1, 6) t(i)
+          union all
+          select 'e6', timestamp '2026-07-02 09:00:00', timestamp '2026-07-02 09:00:00', 'pricing_page', 'web', 'c1', 'a1',
+                 'c1', 'c1', timestamp '2026-07-02 09:00:00', 'email'
+      - input: ref('int_bot_events')
+        format: sql
+        rows: select cast(null as varchar) as event_id, cast(null as varchar) as observed_key, cast(null as timestamp) as occurred_at where false
       - input: ref('signal_taxonomy')
         rows:
           - {event_type: pricing_page, category: engagement, source: web, funnel_stage: BOFU, weight: 5, half_life_days: 5, baseline_ping: true}
     expect:
       rows:
-        - {event_id: e1}
-        - {event_id: e6}
+        - {event_id: e1, known_at: "2026-07-01 11:00:00"}
+        - {event_id: e6, known_at: "2026-07-02 10:00:00"}
 
-  - name: t_u6_bot_hour_threshold
-    model: int_bot_hours
+  - name: t_u6_bot_burst_across_hour_boundary
+    description: 40 hits in 40 minutes straddling 11:00 are all a burst; 29 hits in an hour are human.
+    model: int_bot_events
     given:
       - input: ref('int_events_resolved')
         format: sql
         rows: |
-          select 'b' || i as event_id, timestamp '2026-07-01 10:00:00' + to_seconds(i) as occurred_at,
-                 timestamp '2026-07-01 10:00:00' + to_seconds(i) as known_at, 'pricing_page' as event_type, 'web' as source,
-                 cast(null as varchar) as contact_id, 'a1' as account_id, 'anon:bot' as person_key, 'ip' as resolution_method
-          from range(30) t(i)
+          select 'b' || i as event_id, timestamp '2026-07-01 10:40:00' + to_minutes(cast(i as integer)) as occurred_at,
+                 timestamp '2026-07-01 10:40:00' + to_minutes(cast(i as integer)) as known_at, 'pricing_page' as event_type,
+                 'web' as source, cast(null as varchar) as contact_id, 'a1' as account_id, 'anon:bot' as person_key,
+                 'anon:bot' as observed_key, timestamp '2026-07-01 10:40:00' as person_known_at, 'ip' as resolution_method
+          from range(40) t(i)
           union all
-          select 'h' || i, timestamp '2026-07-01 10:00:00' + to_seconds(i), timestamp '2026-07-01 10:00:00' + to_seconds(i),
-                 'pricing_page', 'web', null, 'a1', 'anon:human', 'ip'
+          select 'h' || i, timestamp '2026-07-01 10:00:00' + to_minutes(cast(i * 2 as integer)), timestamp '2026-07-01 10:00:00',
+                 'pricing_page', 'web', null, 'a1', 'anon:human', 'anon:human', timestamp '2026-07-01 10:00:00', 'ip'
           from range(29) t(i)
       - input: ref('scoring_params')
         rows:
           - {param: bot_events_per_hour, value: "30"}
     expect:
-      rows:
-        - {person_key: "anon:bot", events: 30}
+      format: sql
+      rows: select 'b' || i as event_id, 'anon:bot' as observed_key, timestamp '2026-07-01 10:40:00' + to_minutes(cast(i as integer)) as occurred_at from range(40) t(i)
 
   - name: t_u7_fit_size_boundaries
     model: account_fit

@@ -16,6 +16,9 @@ models:
 
   - name: engine_alerts
     columns:
+      - name: profile
+        data_tests:
+          - accepted_values: {arguments: {values: ['precise', 'broad']}}
       - name: account_id
         data_tests:
           - not_null
@@ -27,7 +30,10 @@ models:
   - name: baseline_points_alerts
     columns:
       - name: account_id
-        data_tests: [unique, not_null]
+        data_tests: [not_null]
+      - name: profile
+        data_tests:
+          - accepted_values: {arguments: {values: ['precise', 'broad']}}
 
 unit_tests:
   - name: t_u1_u2_u3_decay_and_point_in_time
@@ -96,16 +102,22 @@ unit_tests:
         - {account_id: funded, score_date: "2026-07-01", trigger_type: funding_round, contribution: 2.0, n_events: 1}
 
   - name: t_u8_alert_on_entry_with_rearm
-    description: Crosses on day 3 (alert), stays hot to day 10, drops, re-crosses day 20 (alert, 17 days later), re-crosses day 23 (no alert, only 3 days later).
+    description: >
+      precise (threshold 10): crosses on day 3 (alert), stays hot to day 10, drops, re-crosses day 20 (alert, 17 days
+      later), re-crosses day 23 (no alert, only 3 days later). broad (threshold 4): hot from day 1, alerts once.
+      Only the active profile (broad) is flagged is_active.
     model: engine_alerts
     given:
       - input: ref('account_daily_scores')
         format: sql
         rows: |
           select 'a1' as account_id, cast(date '2026-07-01' + cast(i - 1 as integer) as date) as score_date,
-                 0.0 as activity_score, 0.0 as trigger_score, 'A' as fit_grade, 1.0 as fit_multiplier,
+                 0.0 as activity_score, 0.0 as trigger_score, 0.0 as combo_bonus, 'A' as fit_grade, 1.0 as fit_multiplier,
+                 0 as people_14d, 0 as bofu_people_14d, 0 as sources_14d, 0.0 as spike_ratio,
+                 1.0 as m_breadth, 1.0 as m_sources, 1.0 as m_spike, 1.0 as m_gate,
+                 cast(null as varchar) as combos, 'pricing_page' as top_signals, 0.0 as engine_score_m1,
                  case when i between 3 and 10 or i = 20 or i = 23 then 20.0 else 5.0 end as engine_score,
-                 0 as people_14d, 0 as bofu_people_14d, 0 as sources_14d, 'pricing_page' as top_signals
+                 'r' as reason
           from range(1, 26) t(i)
       - input: ref('account_exclusions')
         rows:
@@ -115,9 +127,94 @@ unit_tests:
           - {account_id: a1, owner_ae_id: ae_1}
       - input: ref('scoring_params')
         rows:
-          - {param: engine_threshold, value: "10"}
+          - {param: engine_threshold_precise, value: "10"}
+          - {param: engine_threshold_broad, value: "4"}
           - {param: rearm_days, value: "14"}
+          - {param: active_profile, value: "broad"}
     expect:
       rows:
-        - {account_id: a1, alert_date: "2026-07-03"}
-        - {account_id: a1, alert_date: "2026-07-20"}
+        - {profile: precise, is_active: false, account_id: a1, alert_date: "2026-07-03"}
+        - {profile: precise, is_active: false, account_id: a1, alert_date: "2026-07-20"}
+        - {profile: broad, is_active: true, account_id: a1, alert_date: "2026-07-01"}
+
+  - name: t_u9_pattern_multipliers
+    description: >
+      solo = 1 person with BOFU → breadth 0.7, no spike (needs 2 people).
+      team = 3 people, 2 sources, 3 events this week vs none before → 1.3, 1.15, spike 1.2.
+      binger = MOFU only → no boosts, gate 0.6.
+      stitched = an anonymous visit stitched to c9 only after the score date still counts as a separate person.
+    model: int_pattern_metrics
+    given:
+      - input: ref('events_clean')
+        rows:
+          - {account_id: solo, person_key: p1, observed_key: p1, person_known_at: "2026-07-10 10:00:00", event_type: pricing_page, source: web, funnel_stage: BOFU, occurred_at: "2026-07-10 10:00:00", known_at: "2026-07-10 11:00:00", category: engagement, weight: 5}
+          - {account_id: team, person_key: p1, observed_key: p1, person_known_at: "2026-07-12 10:00:00", event_type: pricing_page, source: web, funnel_stage: BOFU, occurred_at: "2026-07-12 10:00:00", known_at: "2026-07-12 11:00:00", category: engagement, weight: 5}
+          - {account_id: team, person_key: p2, observed_key: p2, person_known_at: "2026-07-12 10:00:00", event_type: integration_page, source: web, funnel_stage: MOFU, occurred_at: "2026-07-12 10:00:00", known_at: "2026-07-12 11:00:00", category: engagement, weight: 3}
+          - {account_id: team, person_key: p3, observed_key: p3, person_known_at: "2026-07-13 10:00:00", event_type: email_click, source: marketing, funnel_stage: MOFU, occurred_at: "2026-07-13 10:00:00", known_at: "2026-07-13 10:00:00", category: engagement, weight: 1.5}
+          - {account_id: binger, person_key: m1, observed_key: m1, person_known_at: "2026-07-12 10:00:00", event_type: content_download, source: marketing, funnel_stage: MOFU, occurred_at: "2026-07-12 10:00:00", known_at: "2026-07-12 10:00:00", category: engagement, weight: 2}
+          - {account_id: binger, person_key: m2, observed_key: m2, person_known_at: "2026-07-12 10:00:00", event_type: content_download, source: marketing, funnel_stage: MOFU, occurred_at: "2026-07-12 10:00:00", known_at: "2026-07-12 10:00:00", category: engagement, weight: 2}
+          - {account_id: stitched, person_key: c9, observed_key: "anon:x", person_known_at: "2026-07-20 10:00:00", event_type: pricing_page, source: web, funnel_stage: BOFU, occurred_at: "2026-07-10 10:00:00", known_at: "2026-07-10 11:00:00", category: engagement, weight: 5}
+          - {account_id: stitched, person_key: c9, observed_key: c9, person_known_at: "2026-07-11 10:00:00", event_type: pricing_page, source: web, funnel_stage: BOFU, occurred_at: "2026-07-11 10:00:00", known_at: "2026-07-11 11:00:00", category: engagement, weight: 5}
+      - input: ref('date_spine')
+        rows:
+          - {score_date: "2026-07-15"}
+      - input: ref('pattern_multipliers')
+        rows:
+          - {multiplier: breadth, min_value: 0, max_value: 2, value: 0.7}
+          - {multiplier: breadth, min_value: 2, max_value: 3, value: 1.0}
+          - {multiplier: breadth, min_value: 3, max_value: 4, value: 1.3}
+          - {multiplier: breadth, min_value: 4, max_value: 1000000, value: 1.5}
+          - {multiplier: sources, min_value: 0, max_value: 2, value: 1.0}
+          - {multiplier: sources, min_value: 2, max_value: 3, value: 1.15}
+          - {multiplier: sources, min_value: 3, max_value: 1000000, value: 1.3}
+          - {multiplier: spike, min_value: 0, max_value: 2, value: 1.0}
+          - {multiplier: spike, min_value: 2, max_value: 4, value: 1.2}
+          - {multiplier: spike, min_value: 4, max_value: 8, value: 1.5}
+          - {multiplier: spike, min_value: 8, max_value: 1000000, value: 1.8}
+      - input: ref('scoring_params')
+        rows:
+          - {param: spike_min_people, value: "2"}
+          - {param: no_bofu_multiplier, value: "0.6"}
+    expect:
+      rows:
+        - {account_id: solo, people_14d: 1, m_breadth: 0.7, m_sources: 1.0, m_spike: 1.0, m_gate: 1.0}
+        - {account_id: team, people_14d: 3, m_breadth: 1.3, m_sources: 1.15, m_spike: 1.2, m_gate: 1.0}
+        - {account_id: binger, people_14d: 2, m_breadth: 1.0, m_sources: 1.0, m_spike: 1.0, m_gate: 0.6}
+        - {account_id: stitched, people_14d: 2, m_breadth: 1.0, m_sources: 1.0, m_spike: 1.2, m_gate: 1.0}
+
+  - name: t_u10_combos
+    description: >
+      evaluation needs two people; one person browsing both pages is not a committee.
+      Trigger combos need engagement: triggers alone earn nothing.
+    model: int_combo_matches
+    given:
+      - input: ref('events_clean')
+        rows:
+          - {account_id: eval2, person_key: p1, observed_key: p1, person_known_at: "2026-07-10 10:00:00", event_type: pricing_page, funnel_stage: BOFU, occurred_at: "2026-07-10 10:00:00", known_at: "2026-07-10 11:00:00", category: engagement, weight: 5}
+          - {account_id: eval2, person_key: p2, observed_key: p2, person_known_at: "2026-07-11 10:00:00", event_type: security_page, funnel_stage: BOFU, occurred_at: "2026-07-11 10:00:00", known_at: "2026-07-11 11:00:00", category: engagement, weight: 6}
+          - {account_id: eval1, person_key: p1, observed_key: p1, person_known_at: "2026-07-10 10:00:00", event_type: pricing_page, funnel_stage: BOFU, occurred_at: "2026-07-10 10:00:00", known_at: "2026-07-10 11:00:00", category: engagement, weight: 5}
+          - {account_id: eval1, person_key: p1, observed_key: p1, person_known_at: "2026-07-11 10:00:00", event_type: security_page, funnel_stage: BOFU, occurred_at: "2026-07-11 10:00:00", known_at: "2026-07-11 11:00:00", category: engagement, weight: 6}
+          - {account_id: trial, person_key: u1, observed_key: u1, person_known_at: "2026-07-05 10:00:00", event_type: trial_started, funnel_stage: MOFU, occurred_at: "2026-07-05 10:00:00", known_at: "2026-07-05 10:00:00", category: engagement, weight: 3}
+          - {account_id: trial, person_key: u1, observed_key: u1, person_known_at: "2026-07-09 10:00:00", event_type: teammate_invited, funnel_stage: BOFU, occurred_at: "2026-07-09 10:00:00", known_at: "2026-07-09 10:00:00", category: engagement, weight: 6}
+          - {account_id: trig_eng, person_key: p1, observed_key: p1, person_known_at: "2026-07-10 10:00:00", event_type: pricing_page, funnel_stage: BOFU, occurred_at: "2026-07-10 10:00:00", known_at: "2026-07-10 11:00:00", category: engagement, weight: 5}
+      - input: ref('triggers_clean')
+        rows:
+          - {event_id: t1, account_id: trig_only, trigger_type: new_sales_leader, occurred_at: "2026-06-01 00:00:00", weight: 5, half_life_days: 60}
+          - {event_id: t2, account_id: trig_only, trigger_type: sdr_job_post, occurred_at: "2026-06-05 00:00:00", weight: 3, half_life_days: 14}
+          - {event_id: t3, account_id: trig_eng, trigger_type: new_sales_leader, occurred_at: "2026-06-01 00:00:00", weight: 5, half_life_days: 60}
+          - {event_id: t4, account_id: trig_eng, trigger_type: sdr_job_post, occurred_at: "2026-06-05 00:00:00", weight: 3, half_life_days: 14}
+      - input: ref('date_spine')
+        rows:
+          - {score_date: "2026-07-15"}
+      - input: ref('combo_rules')
+        rows:
+          - {combo: evaluation, window_days: 14, bonus: 10}
+          - {combo: team_trial, window_days: 14, bonus: 10}
+          - {combo: sales_build, window_days: 60, bonus: 8}
+          - {combo: trigger_then_intent, window_days: 60, bonus: 6}
+    expect:
+      rows:
+        - {account_id: eval2, combo: evaluation, bonus: 10}
+        - {account_id: trial, combo: team_trial, bonus: 10}
+        - {account_id: trig_eng, combo: sales_build, bonus: 8}
+        - {account_id: trig_eng, combo: trigger_then_intent, bonus: 6}

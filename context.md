@@ -165,3 +165,11 @@ Full spec: [docs/implementation.md](docs/implementation.md).
 - **Repo:** solo project; group variants can be added later.
 - **Threshold rule (changed during M1):** capacity is a hard ceiling, not a target. Filling 50/week dropped the threshold to one pricing visit and wrecked precision. Deployed thresholds are tuned for F1 on the dev seed under the ceiling, then applied unchanged to holdout.
 - Status (27 Oct 2026): **M1 built and passing** (71 dbt nodes incl. 8 unit tests, 24 pytest tests). Holdout: engine 42 alerts / 51.5% account precision / 68% recall vs per-event pings 1,110 / 7.6% / 96% and static points 81 / 19.8% / 64%. Remaining M1 failures for M2: pricing hammerers (7/8 alerted) and content bingers (3/8). Nothing committed to git yet.
+
+## M2 (29 Oct 2026)
+
+- Built: breadth, sources, spike (only with ≥ 2 people), high-intent gate (×0.6 without BOFU), four combos (trigger combos need engagement), rolling-hour bot window, time-aware people counts, one-line reasons.
+- Holdout at deployed (dev-F1) thresholds: M2 16 alerts / 86.7% precision / 52% recall vs M1 27 / 55.6% / 60%. At equal alert budgets M2 beats M1 on both (≈40 alerts: 55% / 68% vs 49% / 64%). Hammerer alerts 7 → 2, binger 2 → 0.
+- Weak spot: 2-person "quiet" buyers (4 of 12 misses).
+- **Decided: keep both thresholds.** precise = best dev F1, broad = best dev F2; dbt writes alerts for both (`profile` column). `active_profile` in scoring_params (default `broad`) decides what reps receive. The frontend (M3) gets an explore toggle (viewer only) and a separate, confirmed and logged active setting. F2 was added after the first holdout read; stated in the docs.
+- Holdout, broad (active): 44 alerts / 48.6% precision / 68% recall (17 of 20 planted buyers). Precise: 16 / 86.7% / 52%.

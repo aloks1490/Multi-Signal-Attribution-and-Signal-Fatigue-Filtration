@@ -1,0 +1,5 @@
+combo,window_days,bonus,description
+evaluation,14,10,(pricing or comparison) + (integration or security) by at least 2 people
+team_trial,14,10,trial_started + teammate_invited
+sales_build,60,8,new_sales_leader + sdr_job_post (needs MOFU/BOFU engagement in the last 14 days)
+trigger_then_intent,60,6,any trigger followed by a BOFU event in the last 14 days

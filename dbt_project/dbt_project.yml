@@ -46,3 +46,12 @@ seeds:
     scoring_params:
       +column_types:
         value: varchar
+    pattern_multipliers:
+      +column_types:
+        min_value: double
+        max_value: double
+        value: double
+    combo_rules:
+      +column_types:
+        window_days: integer
+        bonus: double

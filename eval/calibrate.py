@@ -1,9 +1,12 @@
-"""Threshold calibration on the dev seed. Capacity is a hard ceiling; two operating points are chosen:
+"""Threshold calibration on the dev seed. Capacity is a hard ceiling; three operating points are chosen:
 
-- deployed (`engine_threshold`, `points_threshold`): best F1 of account precision and recall on dev,
-  among thresholds whose busiest week stays within capacity. Uses dev labels; holdout is never touched.
+- precise (`*_threshold_precise`): best F1 of account precision and recall on dev (both weighted equally).
+- broad (`*_threshold_broad`): best F2 on dev (recall weighted about twice as much as precision).
 - capacity (`*_threshold_capacity`): the threshold that sends the most alerts without any week exceeding
   capacity. Label-free; shows what "fill the reps' capacity" would cost in precision.
+
+All three stay within capacity and use dev labels only; the holdout seed is never touched. Which of precise
+and broad actually alerts reps is the team-level `active_profile` setting in scoring_params.
 """
 from __future__ import annotations
 
@@ -47,16 +50,20 @@ def simulate_entry_alerts(scores: np.ndarray, threshold: float, rearm_days: int)
 
 
 class EngineSim:
-    """Engine alerts for any threshold, from gold.account_daily_scores (non-excluded accounts)."""
+    """Engine alerts for any threshold, from gold.account_daily_scores (non-excluded accounts).
 
-    def __init__(self, con: duckdb.DuckDBPyConnection, rearm_days: int):
-        df = con.execute("""
-            select s.account_id, s.score_date, s.engine_score
+    column: engine_score (M2, deployed) or engine_score_m1 (decay only, kept for comparison).
+    """
+
+    def __init__(self, con: duckdb.DuckDBPyConnection, rearm_days: int, column: str = "engine_score"):
+        assert column in ("engine_score", "engine_score_m1")
+        df = con.execute(f"""
+            select s.account_id, s.score_date, s.{column} as score
             from gold.account_daily_scores s
             join silver.account_exclusions x using (account_id)
             where not x.excluded
         """).df()
-        m = df.pivot(index="account_id", columns="score_date", values="engine_score").sort_index(axis=1)
+        m = df.pivot(index="account_id", columns="score_date", values="score").sort_index(axis=1)
         self.scores = m.to_numpy()
         self.ids = list(m.index)
         self.days = [pd.Timestamp(c).date() for c in m.columns]
@@ -106,24 +113,25 @@ class PointsSim:
         return pd.DataFrame(rows, columns=["account_id", "alert_date"])
 
 
-def f1(s: dict) -> float:
+def f_beta(s: dict, beta: float) -> float:
+    """F-beta of account precision and recall. beta=1 weighs them equally; beta=2 favours recall."""
     p, r = s["precision_accounts"], s["recall"]
-    return 2 * p * r / (p + r) if p + r else 0.0
+    b2 = beta * beta
+    return (1 + b2) * p * r / (b2 * p + r) if p + r else 0.0
 
 
 def choose(sim, truth: pd.DataFrame, window: Window, capacity: int) -> dict[str, float]:
-    """Return the deployed (best dev F1) and capacity-filling thresholds, both within capacity."""
-    best_f1, best_vol = None, None
+    """Return the precise (best dev F1), broad (best dev F2) and capacity-filling thresholds, all within capacity."""
+    best = {"precise": None, "broad": None, "capacity": None}
     for t in sorted(sim.candidates(), reverse=True):  # high → low so ties keep the higher threshold
         alerts = sim.alerts(t)
         if int(weekly_counts(alerts["alert_date"], window).max()) > capacity:
             continue
         s = summarize(alerts, truth, window)
-        if best_f1 is None or f1(s) > best_f1[1]:
-            best_f1 = (float(t), f1(s))
-        if best_vol is None or s["alerts"] > best_vol[1]:
-            best_vol = (float(t), s["alerts"])
-    return {"deployed": best_f1[0], "capacity": best_vol[0]}
+        for key, value in (("precise", f_beta(s, 1)), ("broad", f_beta(s, 2)), ("capacity", s["alerts"])):
+            if best[key] is None or value > best[key][1]:
+                best[key] = (float(t), value)
+    return {k: v[0] for k, v in best.items()}
 
 
 def write_params(seed_csv: Path, updates: dict[str, float]) -> None:
@@ -144,14 +152,19 @@ def run(db: str, seed_csv: Path, n_aes: int) -> dict[str, float]:
         window = window_from(params, n_aes)
         capacity = int(params["capacity_per_week"])
         truth = con.execute("select * from labels.account_truth").df()
-        engine = choose(EngineSim(con, int(params["rearm_days"])), truth, window, capacity)
+        rearm = int(params["rearm_days"])
+        engine = choose(EngineSim(con, rearm), truth, window, capacity)
+        engine_m1 = choose(EngineSim(con, rearm, "engine_score_m1"), truth, window, capacity)
         points = choose(PointsSim(con), truth, window, capacity)
     finally:
         con.close()
     result = {
-        "engine_threshold": engine["deployed"],
+        "engine_threshold_precise": engine["precise"],
+        "engine_threshold_broad": engine["broad"],
         "engine_threshold_capacity": engine["capacity"],
-        "points_threshold": points["deployed"],
+        "engine_m1_threshold": engine_m1["precise"],
+        "points_threshold_precise": points["precise"],
+        "points_threshold_broad": points["broad"],
         "points_threshold_capacity": points["capacity"],
     }
     write_params(seed_csv, result)

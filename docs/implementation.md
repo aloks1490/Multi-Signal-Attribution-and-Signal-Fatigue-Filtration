@@ -1,6 +1,6 @@
 # Signal Engine: Implementation Spec
 
-Status: M1 built · 27 Oct 2026 · owner: Alok Singh
+Status: M1 + M2 built · 29 Oct 2026 · owner: Alok Singh
 
 This is the build reference. [context.md](../context.md) explains *why* the design looks like this; this file says *what* gets built, in what shape, and how we know it works.
 
@@ -178,7 +178,7 @@ flowchart LR
 
 Raw events go straight to the warehouse; HubSpot is the system of record for people, companies and deals, and receives scores back. HubSpot's free tier cannot ingest custom behavioural events, and its API limits make it a poor event store.
 
-### 4.3 dbt lineage (M1, as built)
+### 4.3 dbt lineage (as built, M2)
 
 ```mermaid
 flowchart LR
@@ -191,15 +191,17 @@ flowchart LR
     page_rules[/page_rules/]:::seed --> int_web_events_mapped
     stg_web_events & stg_contacts:::bronze --> int_cookie_stitch:::silver
     int_web_events_mapped & int_cookie_stitch & stg_ip_company_map:::bronze & stg_product_events:::bronze & stg_marketing_events:::bronze & stg_accounts:::bronze --> int_events_resolved:::silver
-    int_events_resolved --> int_bot_hours:::silver & int_unresolved_events:::silver
-    int_events_resolved & int_bot_hours & signal_taxonomy[/signal_taxonomy/]:::seed --> events_clean:::silver
+    int_events_resolved --> int_bot_events:::silver & int_unresolved_events:::silver
+    int_events_resolved & int_bot_events & signal_taxonomy[/signal_taxonomy/]:::seed --> events_clean:::silver
     stg_trigger_events:::bronze & signal_taxonomy --> triggers_clean:::silver
     stg_accounts & fit_rules[/fit_rules + fit_grades/]:::seed --> account_fit:::silver --> account_exclusions:::silver
 
     scoring_params[/scoring_params/]:::seed --> date_spine:::gold
-    date_spine & events_clean --> int_engagement_contrib:::gold & int_activity_window:::gold
+    date_spine & events_clean --> int_engagement_contrib:::gold & int_pattern_metrics:::gold
+    date_spine & events_clean & triggers_clean --> int_combo_matches:::gold
+    pattern_seeds[/pattern_multipliers + combo_rules/]:::seed --> int_pattern_metrics & int_combo_matches
     date_spine & triggers_clean --> int_trigger_contrib:::gold
-    int_engagement_contrib & int_trigger_contrib & int_activity_window & account_fit --> account_daily_scores:::gold
+    int_engagement_contrib & int_trigger_contrib & int_pattern_metrics & int_combo_matches & account_fit --> account_daily_scores:::gold
     account_daily_scores & account_exclusions --> engine_alerts:::gold
     events_clean & account_exclusions --> baseline_event_pings:::gold & handraise_routes:::gold
     events_clean & triggers_clean & account_exclusions --> baseline_points_alerts:::gold
@@ -349,7 +351,9 @@ All timestamps are UTC `TIMESTAMP`; dates are `DATE`.
 | Column | Notes |
 |---|---|
 | event_id | first raw event of that person/type/day |
-| known_at | when the event could first be attributed: `occurred_at`, or the cookie's first email sighting for stitched events. Scores use `known_at < d` |
+| known_at | when the event could first be attributed: `occurred_at` (+1 hour for web events, see bot filter), or the cookie's first email sighting for stitched events. Scores use `known_at < d` |
+| observed_key | identity visible on the event itself: contact for emails, `anon:<cookie>` otherwise |
+| person_known_at | when `person_key` became known. People counts for date d use `person_key` if `person_known_at < d`, else `observed_key` |
 | account_id | resolved |
 | person_key | `contact_id` if known, else `anon:<anonymous_id>` |
 | event_type | taxonomy key |
@@ -362,12 +366,12 @@ All timestamps are UTC `TIMESTAMP`; dates are `DATE`.
 
 Upstream rules:
 1. **Identity:**
-   - Web: event → contact via `contact_email`. An `anonymous_id` that ever appears with a known email is stitched to that contact (cookie stitching); a stitched event only becomes usable at `known_at = max(occurred_at, first email sighting)`, so identity learned later is never used for earlier scores. Known gap: `person_key` uses the stitched contact for all of that cookie's events, so 14-day people counts can see slightly ahead; it does not affect M1 scores. Otherwise the account comes from `ip_company_map` and `person_key = anon:<anonymous_id>`. Unresolvable events are dropped and counted in `int_unresolved_events`.
+   - Web: event → contact via `contact_email`. An `anonymous_id` that ever appears with a known email is stitched to that contact (cookie stitching); a stitched event only becomes usable at `known_at = max(occurred_at, first email sighting)`, so identity learned later is never used for earlier scores. People counts use `person_key` only after `person_known_at`, so they never see ahead (fixed in M2). Otherwise the account comes from `ip_company_map` and `person_key = anon:<anonymous_id>`. Unresolvable events are dropped and counted in `int_unresolved_events`.
    - Product and marketing: email → contact; if the email is not a known contact, the account comes from the email domain and `person_key = email:<address>` (a new person at the account).
    - Ads: a web event with `utm_source = 'paid'` maps to `ad_click`, whatever the page.
-2. **Bot filter:** any clock hour in which a person_key has ≥ 30 web events is dropped (only those hours, so the rule never uses future data). Known gap: a burst that straddles an hour boundary can slip through in pieces; a rolling 60-minute window is planned for M2.
+2. **Bot filter (M2, rolling):** a web event is dropped if it falls inside any 60-minute window in which the same visitor (`observed_key`) has ≥ 30 events (`int_bot_events`). Windows are found from "anchor" events that open them, so bursts straddling a clock hour are caught. Classifying an event looks up to 60 minutes ahead, so web events' `known_at` is delayed by one hour. (M1 used fixed clock hours.)
 3. **Taxonomy mapping:** page_path → event_type (`/pricing` → `pricing_page`, `/vs/*` → `comparison_page`, …); unmapped paths dropped.
-4. **Daily cap:** at most one row per (person_key, event_type, calendar day).
+4. **Daily cap:** at most one row per (`observed_key`, event_type, calendar day). The cap uses the identity visible on the event itself, never later stitching.
 
 **`triggers_clean`**: event_id, account_id, trigger_type, occurred_at, closed_at, weight, half_life_days. Job posts capped at 3 open posts per account.
 
@@ -388,14 +392,21 @@ Upstream rules:
 | trigger_score | decayed triggers |
 | fit_grade, fit_multiplier | |
 | engine_score | see §7 |
-| bofu_people_14d, people_14d, sources_14d | for explanations (multipliers apply from M2) |
+| people_14d, bofu_people_14d, sources_14d, spike_ratio | 14-day shape (people with MOFU/BOFU activity, as known on d) |
+| m_breadth, m_sources, m_spike, m_gate, combo_bonus, combos | M2 pattern terms |
+| engine_score_m1 | M1 score, kept for comparison |
+| reason | one line for the rep, e.g. `62 · fit A · 3 people · pricing_page, comparison_page, new_sales_leader · 4.2× usual activity · evaluation + team_trial` |
 | top_signals | up to 3 largest contributors (≥ 0.5 points), e.g. `pricing_page, new_sales_leader, comparison_page` |
 
-**`engine_alerts`**: account_id, alert_date, owner_ae_id, engine_score, tier, top_signals.
+**`engine_alerts`**: profile (`precise` / `broad`), is_active, account_id, alert_date, owner_ae_id, engine_score, tier, top_signals, reason. Both profiles are always written; `is_active` marks the one activation sends to reps.
+
+**`int_pattern_metrics`** (M2): per account × date: 14-day people/sources, spike ratio, and the four multipliers.
+
+**`int_combo_matches`** (M2): one row per account × date × matched combo, with its bonus.
 
 **`baseline_event_pings`**: one row per high-intent event (pricing, comparison, security, trial_started, demo_request) at non-excluded accounts: account_id, alert_date, event_type, owner_ae_id.
 
-**`baseline_points_alerts`**: account_id, alert_date (first day cumulative points ≥ threshold), points.
+**`baseline_points_alerts`**: profile, account_id, alert_date (first day cumulative points ≥ the profile's threshold).
 
 **`handraise_routes`**: account_id, routed_date (demo requests; bypass scoring).
 
@@ -431,7 +442,9 @@ Upstream rules:
 
 `sdr_job_post` does not decay while the post is open; its 14-day half-life starts at `closed_at`. Email opens are stored but weigh 0 (Apple Mail Privacy Protection loads tracking pixels automatically).
 
-`scoring_params.csv`: `sim_start`, `eval_start`, `eval_end`, `warmup_days` (28), `lookback_days` (180), `bot_events_per_hour` (30), `max_open_job_posts` (3), `rearm_days` (14), `capacity_per_week` (50), `warm_ratio` (0.5), `watch_ratio` (0.25), and four thresholds written by calibration: `engine_threshold`, `points_threshold` (deployed) and `engine_threshold_capacity`, `points_threshold_capacity` (reported for comparison).
+`scoring_params.csv`: `sim_start`, `eval_start`, `eval_end`, `warmup_days` (28), `lookback_days` (180), `bot_events_per_hour` (30), `max_open_job_posts` (3), `rearm_days` (14), `capacity_per_week` (50), `warm_ratio` (0.5), `watch_ratio` (0.25), `no_bofu_multiplier` (0.6), `spike_min_people` (2), thresholds written by calibration (`engine_threshold_precise` / `_broad` / `_capacity`, `points_threshold_precise` / `_broad` / `_capacity`, `engine_m1_threshold`), and **`active_profile`** (`precise` or `broad`, default `broad`): the team-level setting for which profile reaches reps. Calibration never changes `active_profile`.
+
+`pattern_multipliers.csv` (M2): breadth / sources / spike bands as `[min_value, max_value)` → value. `combo_rules.csv` (M2): combo, window_days, bonus.
 
 ---
 
@@ -469,26 +482,32 @@ fit_multiplier    = A 1.0 · B 0.75 · C 0.4 · D 0
 engine_score(d) = fit_multiplier × (activity_score(d) + trigger_score(d))
 ```
 
-**M2 (patterns), planned:**
+**M2 (patterns), built:**
 
 ```
-engine_score(d) = fit_multiplier × (activity_score × m_breadth × m_sources × m_spike
+engine_score(d) = fit_multiplier × (activity_score × m_breadth × m_sources × m_spike × m_gate
                                     + trigger_score + combo_bonus)
 ```
 
-| Multiplier | Rule (14-day window unless stated) | Values |
+| Term | Rule (14-day window unless stated) | Values |
 |---|---|---|
-| m_breadth | distinct people with ≥1 MOFU/BOFU event | 1 → 0.7, 2 → 1.0, 3 → 1.3, 4+ → 1.5 |
+| m_breadth | distinct people with ≥1 MOFU/BOFU event, counted as known on d | 1 → 0.7, 2 → 1.0, 3 → 1.3, 4+ → 1.5 |
 | m_sources | distinct sources among web / ads / product / marketing | 1 → 1.0, 2 → 1.15, 3+ → 1.3 |
-| m_spike | engagement events last 7 days ÷ weekly average of the prior 8 weeks (floor 1/week) | <2 → 1.0, 2–4 → 1.2, 4–8 → 1.5, 8+ → 1.8 |
-| High-intent gate | if no BOFU event in 14 days, m_breadth, m_sources and m_spike are all forced to 1.0 | — |
+| m_spike | engagement events last 7 days ÷ weekly average of the 8 weeks before (floor 1/week); **only when ≥ 2 people are active** | <2 → 1.0, 2–4 → 1.2, 4–8 → 1.5, 8+ → 1.8 |
+| m_gate | no BOFU event in 14 days: breadth, sources and spike are forced to 1.0 and activity is damped | 0.6 (1.0 with BOFU) |
+
+Two changes from the plan, made before any M2 results were seen:
+- **Spike needs two people.** Otherwise a single person's burst (a pricing hammerer) earns ×1.8 and outweighs the ×0.7 breadth penalty.
+- **The gate damps instead of only blocking boosts.** Content bingers (many marketing people, no BOFU) otherwise kept their full activity score.
 
 | Combo | Rule | Bonus |
 |---|---|---|
 | evaluation | (pricing or comparison) + (integration or security) within 14 days, by ≥ 2 people | +10 |
 | team_trial | trial_started + teammate_invited within 14 days | +10 |
-| sales_build | new_sales_leader + sdr_job_post within 60 days | +8 |
-| trigger_then_intent | any trigger, then a BOFU event within 60 days | +6 |
+| sales_build | new_sales_leader + sdr_job_post within 60 days, **and** MOFU/BOFU engagement in the last 14 days | +8 |
+| trigger_then_intent | a trigger in the last 60 days, then a BOFU event after it within the last 14 days | +6 |
+
+Trigger combos need engagement: triggers alone never earn a bonus, which keeps `trigger_only` accounts quiet.
 
 ### 7.5 Tiers and alerts
 
@@ -513,10 +532,13 @@ Capacity (50 alerts/week) is a **hard ceiling**, not a target. The first M1 run 
 
 Calibration runs on the **dev seed** only (`python -m eval calibrate`):
 1. Candidate thresholds: 400 quantiles of non-zero daily scores (engine) or final cumulative points (static points).
-2. For each candidate, simulate the alert rule in Python (same rule as the dbt model; tests T-C1/T-C2 check they agree) and drop candidates whose busiest week exceeds capacity.
-3. **Deployed threshold** = best F1 of account precision and recall on dev. Ties keep the higher threshold.
-4. **Capacity threshold** = the one sending the most alerts without breaching the ceiling (label-free). Reported alongside, to show what filling capacity costs.
-5. All four values are written to `scoring_params.csv`; the holdout run uses them unchanged.
+2. For each candidate, simulate the alert rule in Python (same rule as the dbt model; tests T-C1/T-C2 check they agree for both profiles) and drop candidates whose busiest week exceeds capacity.
+3. **Precise profile** = best F1 of account precision and recall on dev (both weighted equally).
+4. **Broad profile** = best F2 on dev (recall weighted about twice as much as precision). Ties keep the higher threshold.
+5. **Capacity threshold** = the one sending the most alerts without breaching the ceiling (label-free). Reported only, to show what filling capacity costs.
+6. All values are written to `scoring_params.csv`; the holdout run uses them unchanged.
+
+**Active setting.** dbt writes alerts for both profiles. `active_profile` decides which one activation (Slack, HubSpot) sends to reps. It is a deliberate team-level config change, not a per-viewer toggle. Default: `broad`, because a missed buyer usually costs a deal while a wasted alert costs a few minutes, and reps have far more capacity than the precise profile uses.
 
 Using dev labels is fine because the holdout seed is never used for tuning. In production the same step is a backtest on historical outcomes.
 
@@ -600,11 +622,13 @@ IDs are referenced in commits and the README. **M1** marks tests built in M1. Ru
 | T-U1 | int_engagement_contrib | weight 8, half-life 7, age 7 days | 4.0 |
 | T-U2 | int_engagement_contrib | age 14 days | 2.0 |
 | T-U3 | int_engagement_contrib | event at 00:00 on score_date | excluded (point-in-time) |
-| T-U4 | events_clean | same person, same page, 5 times in one day | 1 row |
+| T-U4 | events_clean | same visitor, same page, 5 times in one day (+1 next day) | 1 row per day; web known_at = occurred_at + 1 h |
 | T-U5 | int_trigger_contrib | job post open / closed 14 days before d / 4 open posts / funding 75 days old | 3.0 / 1.5 / 9.0 (cap 3) / 2.0 |
-| T-U6 | int_bot_people | 30 events in one hour / 29 | bot / not bot |
+| T-U6 | int_bot_events | 40 hits in 40 min straddling 11:00 / 29 hits in an hour | all 40 flagged / none |
 | T-U7 | account_fit | 50 and 1,000 employees; 49 and 1,001 | 2 points; 1 point |
 | T-U3b | int_engagement_contrib | stitched event occurred 1 Jul, attributable 10 Jul | not in 6 Jul score; in 11 Jul score aged from 1 Jul |
+| T-U9 | int_pattern_metrics | 1 person / 3 people, 2 sources, spike 3× / MOFU only / anonymous visit stitched after d | 0.7 / 1.3, 1.15, 1.2 / gate 0.6 / counted as 2 people |
+| T-U10 | int_combo_matches | pricing+security by 2 people vs 1 person; trial+invite; triggers with and without engagement | evaluation only for 2 people; team_trial; trigger combos only with engagement |
 | T-U8 | engine_alerts | score crosses T on day 3, stays above to day 10, drops, re-crosses on day 20, again on day 23 | alerts on day 3 and day 20 only |
 
 ### 9.4 Pipeline guards (pytest) — M1
@@ -628,9 +652,20 @@ IDs are referenced in commits and the README. **M1** marks tests built in M1. Ru
 | T-C1 | Python engine simulation = `gold.engine_alerts` at the deployed threshold |
 | T-C2 | Python static-points simulation = `gold.baseline_points_alerts` |
 
-### 9.6 Later milestones
+### 9.6 M2 behaviour (pytest, `tests/test_patterns.py`)
 
-- **M2:** unit tests for each multiplier boundary and combo window; acceptance: `pricing_hammerer` and `content_binger` alert counts drop vs M1 on holdout, recall does not drop.
+| Test | Check |
+|---|---|
+| Single-person damping | pricing_hammerer and stalled_trial accounts with one active person: activity multiplier < 1 on their most active day |
+| No-BOFU damping | content_binger days with no BOFU: multiplier < 1 |
+| Triggers alone | trigger_only accounts never get a combo bonus |
+| Committee boost | committee buyers: multiplier > 1, a combo, and M2 score > M1 score during the episode |
+| Reasons | every alert's reason names fit and signals |
+
+T-P1 (point-in-time) now covers the M2 score, including time-aware people counts.
+
+### 9.7 Later milestones
+
 - **M3:** Streamlit `AppTest` smoke test per page; `app/queries.py` unit tests (shared with Reflex); DB opened read-only.
 - **M4:** Claude prompt contract test: the reason text only mentions signals present in the input facts (string check), falls back to the template on API error; Slack payload snapshot test; dry-run without webhook.
 - **M5:** HubSpot client tested against recorded responses; idempotent re-push (same day twice → no duplicates).
@@ -642,7 +677,7 @@ IDs are referenced in commits and the README. **M1** marks tests built in M1. Ru
 | # | Scope | Done when |
 |---|---|---|
 | **M1** ✅ | Generator, bronze/silver/gold, decayed base score, fit gate, exclusions, alert-on-entry, both baselines, calibration, eval report | §9 M1 tests pass; `docs/results.md` has dev + holdout tables |
-| M2 | Breadth, sources, spike, high-intent gate, combos, rolling-hour bot window, explanations naming signals | Holdout: `pricing_hammerer` and `content_binger` alerts drop vs M1 at equal or better recall |
+| M2 ✅ | Breadth, sources, spike, high-intent gate, combos, rolling-hour bot window, time-aware people counts, reasons | Holdout: hammerer and binger alerts drop vs M1 (met); at equal alert budgets M2 recall ≥ M1 (met). At each method's own dev-F1 threshold recall dropped 60% → 52% (see §13) |
 | M3 | Streamlit app: naive-vs-engine view, account deep-dive (timeline + decay + score breakdown), tuning sandbox, alert feed | Pages load from read-only DB; AppTest smoke tests pass |
 | M4 | Cooldown + per-AE budget, Claude reasons (top N only), Slack digest, GitHub Actions daily run | Daily run posts a digest; reasons cite only real signals |
 | M5 | HubSpot free sync (score, tier, reason as company properties; exclusions read back) | Idempotent push, dry-run mode |
@@ -659,6 +694,9 @@ IDs are referenced in commits and the README. **M1** marks tests built in M1. Ru
 2. **Account deep-dive:** event timeline by person, each signal's decay curve, score breakdown (activity → × multipliers → + triggers → × fit).
 3. **Tuning sandbox:** edit weights / half-lives → writes a scratch copy of the seeds → re-runs the gold models (seconds on DuckDB) → shows the new metrics next to the saved ones. dbt stays the only place scoring logic lives.
 4. **Alert feed:** what an AE sees today, with reason and accept/dismiss (stored in `app_feedback`).
+5. **Explore view vs active setting:**
+   - *Explore:* a toggle between **Precise** ("fewer, surer alerts") and **Broad** ("catch more buyers"), with each profile's alert count, precision and recall shown beside it, and optionally a slider across the whole threshold curve with F1 and F2 marked. Changing it changes only what the viewer sees.
+   - *Active setting:* a separate, deliberate control that sets `active_profile` (who gets pinged). Changing it should ask for confirmation and be logged (who, when, from → to).
 
 ### 11.2 Keeping Reflex cheap later
 
@@ -700,20 +738,36 @@ IDs are referenced in commits and the README. **M1** marks tests built in M1. Ru
 
 ---
 
-## 13. M1 results (holdout seed 7)
+## 13. Results (holdout seed 7)
 
-Full tables: [results.md](results.md). 2,000 accounts, 25 positives (20 planted buyers, 5 random converters), 13 weeks, 5 AEs.
+Full tables: [results.md](results.md). 2,000 accounts, 25 positives (20 planted buyers, 5 random converters), 13 weeks, 5 AEs. M1 numbers here are re-run on the M2 silver layer (rolling bot window, one-hour delay for web events), so they differ slightly from the M1 commit.
+
+**Deployed thresholds (tuned on dev, applied unchanged):**
 
 | Method | Alerts | Alerts/AE/week | Precision (accounts) | Recall | Median lead |
 |---|---:|---:|---:|---:|---:|
-| Per-event pings | 1,110 | 17.1 | 7.6% | 96% | 20 days |
-| Static points (dev-tuned) | 81 | 1.2 | 19.8% | 64% | 12 days |
-| Engine M1 (filling capacity) | 571 | 8.8 | 4.7% | 68% | 26 days |
-| **Engine M1 (dev-tuned)** | **42** | **0.6** | **51.5%** | **68%** | **10 days** |
+| Per-event pings | 1,149 | 17.7 | 7.6% | 96% | 20 days |
+| Static points precise (F1) | 81 | 1.2 | 19.8% | 64% | 12 days |
+| Static points broad (F2) | 92 | 1.4 | 20.7% | 76% | 11 days |
+| Engine M1 precise (F1) | 27 | 0.4 | 55.6% | 60% | 8 days |
+| Engine M2 precise (F1) | 16 | 0.2 | 86.7% | 52% | 9 days |
+| **Engine M2 broad (F2), active** | **44** | **0.7** | **48.6%** | **68%** | **11 days** |
+
+**Equal alert budget (the fair ranking comparison):**
+
+| Alerts in 13 weeks | Static points | Engine M1 | Engine M2 |
+|---:|---:|---:|---:|
+| ~15 | 7% / 4% | 62% / 32% | **87% / 52%** |
+| ~40 | 15% / 24% | 49% / 64% | **55% / 68%** |
+| ~60 | 17% / 40% | 38% / 64% | **40% / 68%** |
+
+(precision per account / recall)
 
 What it shows:
-- At the same recall as static points, the engine sends half the alerts at 2.6× the precision. Against per-event pings it sends 26× fewer alerts.
-- Of the 8 positives the engine missed, 5 are random converters (no signal to find, by design) and 3 are planted buyers (2 quiet, 1 PLG). Planted-buyer recall is 17/20.
-- Exclusions and the fit gate stop every customer, open-deal and low-fit look-alike. The bot-hour filter stops all bot bursts at the deployed threshold.
-- **Still failing (M2's job):** `pricing_hammerer` 7/8 alerted (one person can still carry an account), `content_binger` 3/8. Breadth and the high-intent gate target exactly these.
-- Filling capacity is the wrong goal: at the capacity threshold precision falls to 4.7% with no gain in recall.
+- **M2 ranks better than M1 at every budget.** F1 picks a very strict point for M2 (16 alerts in 13 weeks against a capacity of 650), because M2 boosts committee buyers far above 2-person "quiet" buyers. The broad (F2) profile fixes the operating point: 44 alerts, 68% recall (17 of 20 planted buyers), about half the alerted accounts real buyers.
+- **Static points with F2 catch more (76%) but need twice the alerts at under half the precision**, and at equal budgets static points fall far behind (~40 alerts: 24% recall vs 68%).
+- **The traps M2 targets now mostly stay quiet.** Hard-negative accounts alerted, M1 → M2: content_binger 2 → 0, pricing_hammerer 7 → 2; stalled_trial, trigger_only, bot_burst, customer, open-deal and low-fit all 0.
+- **Missed by M2 broad:** 5 random converters (nothing to find), 2 quiet buyers, 1 PLG buyer. Quiet buyers remain the weak spot: two people, one source, no product use. Broad lets 4 pricing hammerers and 1 stalled trial through (precise: 2 and 0).
+- Filling capacity is still the wrong goal: at the capacity threshold M2's precision falls to 4.7%.
+
+**Decision (29 Oct 2026):** keep both profiles. Both thresholds are chosen on dev; the F2 profile was added after the first M2 holdout read, and that is stated here. `active_profile = broad` by default; the app gets an explore toggle and a separate, logged active setting (M3).
