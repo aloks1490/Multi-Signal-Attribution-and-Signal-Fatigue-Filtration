@@ -66,6 +66,23 @@ def test_checker_accepts_reworded_dates_but_not_new_ones():
     assert any("17" in p for p in problems) and any("March" in p for p in problems)
 
 
+@pytest.mark.parametrize("sentence", [
+    "Strong interest from Acme Corp's sales team",        # possessive of a fact word
+    "Their SDRs and RevOps are both active",               # plural of a known term
+    "This is an A-grade fit with HubSpot",                 # hyphenated, every part known
+])
+def test_checker_accepts_grammatical_forms(sentence):
+    ok = json.loads(json.dumps(GOOD))
+    ok["why_now"][0] = sentence
+    assert narrate.check(ok, FACTS) == []
+
+
+def test_checker_still_rejects_unknown_hyphenated_names():
+    bad = json.loads(json.dumps(GOOD))
+    bad["why_now"][0] = "Their partner Globex-Initech is evaluating"
+    assert any("Globex-Initech" in p for p in narrate.check(bad, FACTS))
+
+
 def test_parse_handles_fences_and_prose():
     assert narrate.parse("Sure! ```json\n{\"a\": 1}\n``` hope that helps") == {"a": 1}
 

@@ -195,11 +195,23 @@ def check(out: dict, facts: dict) -> list[str]:
         problems.append(f"numbers not in facts: {sorted(invented_numbers)}")
     known = _fact_words(facts) | COMMON_WORDS
     for sentence in [out["headline"], *out["why_now"], out["angle"], *text["why"]]:
-        words = re.findall(r"[A-Za-z][A-Za-z&'.-]+", sentence)
+        words = re.findall(r"[A-Za-z][A-Za-z&'’.-]+", sentence)
         for w in words[1:]:  # the first word of a sentence is capitalised anyway
-            if w[0].isupper() and w.lower().strip(".'") not in known:
+            if w[0].isupper() and not _is_known(w, known):
                 problems.append(f"name or term not in facts: {w}")
     return problems
+
+
+def _is_known(word: str, known: set[str]) -> bool:
+    """A word is known if it, or a plain grammatical form of it, is: possessive (Seqly's), plural (BDRs),
+    or every part of a hyphenated word (A-grade)."""
+    w = word.lower().strip(".'’")
+    w = re.sub(r"['’]s$", "", w)
+    forms = {w, w[:-1] if w.endswith("s") else w}
+    if any(f in known for f in forms):
+        return True
+    parts = [p for p in w.split("-") if p]
+    return len(parts) > 1 and all(p in known or (len(p) == 1 and p.isalpha()) for p in parts)
 
 
 # ---------- template fallback ----------
