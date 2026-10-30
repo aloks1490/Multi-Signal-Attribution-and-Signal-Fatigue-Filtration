@@ -70,6 +70,7 @@ def test_checker_accepts_reworded_dates_but_not_new_ones():
     "Strong interest from Acme Corp's sales team",        # possessive of a fact word
     "Their SDRs and RevOps are both active",               # plural of a known term
     "This is an A-grade fit with HubSpot",                 # hyphenated, every part known
+    "Clear SDR-related hiring and pricing interest",       # hyphenated with an ordinary lowercase part
 ])
 def test_checker_accepts_grammatical_forms(sentence):
     ok = json.loads(json.dumps(GOOD))

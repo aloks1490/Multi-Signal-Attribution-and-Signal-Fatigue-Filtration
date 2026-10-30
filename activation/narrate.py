@@ -204,14 +204,15 @@ def check(out: dict, facts: dict) -> list[str]:
 
 def _is_known(word: str, known: set[str]) -> bool:
     """A word is known if it, or a plain grammatical form of it, is: possessive (Seqly's), plural (BDRs),
-    or every part of a hyphenated word (A-grade)."""
+    or every capitalised part of a hyphenated word (A-grade, SDR-related)."""
     w = word.lower().strip(".'’")
     w = re.sub(r"['’]s$", "", w)
     forms = {w, w[:-1] if w.endswith("s") else w}
     if any(f in known for f in forms):
         return True
-    parts = [p for p in w.split("-") if p]
-    return len(parts) > 1 and all(p in known or (len(p) == 1 and p.isalpha()) for p in parts)
+    # Hyphenated: only capitalised parts can be names (SDR-related → check "SDR"; "related" is ordinary English).
+    parts = [p for p in word.strip(".'’").split("-") if p]
+    return len(parts) > 1 and all(_is_known(p, known) or len(p) == 1 or not p[0].isupper() for p in parts)
 
 
 # ---------- template fallback ----------
