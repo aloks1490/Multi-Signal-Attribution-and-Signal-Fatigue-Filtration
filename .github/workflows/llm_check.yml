@@ -1,0 +1,34 @@
+name: LLM acceptance check
+
+# Explains a sample of alerts with the configured model and reports how many pass the fact checker.
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: "How many alerts to sample"
+        default: "40"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_EXTRA_BODY: ${{ vars.LLM_EXTRA_BODY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: make generate NAME=holdout SEED=7
+      - run: make build NAME=holdout
+      - name: Check
+        env:
+          N: ${{ inputs.n }}
+        run: uv run python -m activation.check --db data/holdout.duckdb --n "$N"

@@ -10,6 +10,9 @@ people as (
         a.alert_date,
         e.contact_id,
         any_value(c.first_name || ' ' || c.last_name) as name,
+        any_value(c.first_name) as first_name,
+        any_value(c.last_name) as last_name,
+        any_value(c.email) as email,
         any_value(c.title) as title,
         any_value(c.seniority) as seniority,
         any_value(c.function) as function,
@@ -76,7 +79,8 @@ select
     s.top_signals,
     s.reason,
     coalesce(an.anonymous_visitors, 0) as anonymous_visitors,
-    (select list(struct_pack(name := p.name, title := p.title, seniority := p.seniority, function := p.function,
+    (select list(struct_pack(contact_id := p.contact_id, name := p.name, first_name := p.first_name, last_name := p.last_name,
+                             email := p.email, title := p.title, seniority := p.seniority, function := p.function,
                              did := p.did, last_seen := cast(p.last_seen as date)) order by p.last_seen desc)
      from people p where p.account_id = a.account_id and p.alert_date = a.alert_date) as people,
     (select list(struct_pack(signal := g.event_type, stage := g.funnel_stage, n := g.n) order by g.n desc, g.event_type)

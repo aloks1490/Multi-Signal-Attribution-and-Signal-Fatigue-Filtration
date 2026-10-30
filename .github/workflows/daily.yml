@@ -1,6 +1,7 @@
 name: Daily digest
 
-# Rebuilds the holdout world, scores it, explains today's alerts and posts one Slack digest.
+# Rebuilds the holdout world, reads exclusions back from HubSpot, scores it, explains today's alerts, posts one Slack
+# digest and syncs scores, contacts and tasks to HubSpot.
 # The data is synthetic and fixed, so each run replays one day of the 13-week window (activation/run.py replay_date).
 on:
   schedule:
@@ -40,6 +41,8 @@ jobs:
       # Without a webhook the run is a dry run.
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+      # Without a token the HubSpot steps are dry runs.
+      HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -49,6 +52,8 @@ jobs:
         run: uv sync
       - name: Generate the holdout world
         run: make generate NAME=holdout SEED=7
+      - name: Read CRM (HubSpot → warehouse, so rep changes become exclusions)
+        run: uv run python -m activation.crm pull --db data/holdout.duckdb
       - name: Score (dbt build runs every data and unit test; a failure stops here, before anything is posted)
         run: make build NAME=holdout
       - name: Explain and post
@@ -62,6 +67,15 @@ jobs:
           if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
           if [ "$FORCE" = "true" ]; then args+=(--force); fi
           uv run python -m activation "${args[@]}"
+      - name: Sync CRM (warehouse → HubSpot)
+        env:
+          AS_OF: ${{ inputs.as_of }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=(push --db data/holdout.duckdb)
+          if [ -n "$AS_OF" ]; then args+=(--as-of "$AS_OF"); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          uv run python -m activation.crm "${args[@]}"
       - name: Keep the digest
         if: always()
         uses: actions/upload-artifact@v4

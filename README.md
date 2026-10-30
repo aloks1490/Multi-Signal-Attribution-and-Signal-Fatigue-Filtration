@@ -12,11 +12,11 @@ Account-level intent scoring that replaces one-alert-per-event with a short list
 |---|---:|---:|---:|---:|
 | Ping on every pricing/security/demo event | 1,149 | 17.7 | 7.6% | 96% |
 | Static lead points (no decay), recall-weighted | 92 | 1.4 | 20.7% | 76% |
-| Engine M1 (decay + fit gate + exclusions) | 27 | 0.4 | 55.6% | 60% |
-| Engine M2, precise profile (F1) | 16 | 0.2 | 86.7% | 52% |
-| **Engine M2, broad profile (F2, active)** | **44** | **0.7** | **48.6%** | **68%** |
+| Engine M1 (decay + fit gate + exclusions) | 43 | 0.7 | 55.6% | 60% |
+| Engine M2, precise profile (F1) | 26 | 0.4 | 86.7% | 52% |
+| **Engine M2, broad profile (F2, active)** | **67** | **1.0** | **48.6%** | **68%** |
 
-The engine keeps two thresholds, both tuned on dev data: **precise** (fewer, surer alerts) and **broad** (catches more buyers). A team-level `active_profile` setting picks which one reaches reps. At the same alert budget M2 beats M1 and static points on both precision and recall (≈40 alerts: 55% / 68% vs 49% / 64% and 15% / 24%). Details: [docs/results.md](docs/results.md). Synthetic data proves the machinery, not the weights.
+The engine keeps two thresholds, both tuned on dev data: **precise** (fewer, surer alerts) and **broad** (catches more buyers); a team-level `active_profile` picks which one reaches reps. Alerts pass through a 14-day cooldown (broken by a 1.5× score jump) and a per-AE budget of 2 a day and 10 a week. At the same alert budget M2 beats M1 and static points on both precision and recall. Details: [docs/results.md](docs/results.md). Synthetic data proves the machinery, not the weights.
 
 ## Quick start
 
@@ -29,6 +29,8 @@ make test      # pytest: generator, metrics, calibration, truth wall, point-in-t
 make app       # Streamlit app on http://localhost:8501
 uv run python -m activation --as-of 2026-08-03 --dry-run   # build one day's Slack digest into out/
 ```
+
+**HubSpot (M5).** The daily run reads exclusions back from HubSpot before scoring (a rep marking a company as a customer stops its alerts) and afterwards pushes score, tier, reason and the model's headline to company records, the buying group as contacts, and one task per alert. Without a `HUBSPOT_TOKEN` it is a dry run. Setup: [docs/implementation.md §15](docs/implementation.md).
 
 **Daily digest (M4).** `.github/workflows/daily.yml` rebuilds the world at 06:00 UTC on weekdays, applies cooldown and a per-AE budget, has an LLM (any OpenAI-compatible free tier: OpenRouter or NVIDIA NIM) explain each alert from a fact sheet, rejects anything not in the facts, and posts one Slack message. Without secrets it runs as a dry run. Setup: [docs/implementation.md §14](docs/implementation.md).
 
@@ -51,7 +53,7 @@ dbt_project/   staging → silver → gold models, seeds = tuning config
 eval/          calibration, metrics, results report (reads truth labels)
 app/           Streamlit app; queries.py and charts.py are UI-free for the later Reflex port
 engine/        alerting rules (cooldown, score jump, per-AE budget)
-activation/    explanations, Slack digest, daily run
+activation/    explanations, Slack digest, HubSpot sync, daily run
 tests/         pytest suite
 docs/          implementation spec and results
 ```

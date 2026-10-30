@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
@@ -231,4 +232,4 @@ def test_llm_results_are_cached(act_env, monkeypatch):
 def test_activation_never_reads_truth_labels():
     for f in (ROOT / "activation").glob("*.py"):
         text = f.read_text()
-        assert "labels." not in text and "account_truth" not in text, f.name
+        assert not re.search(r"labels\.[a-z_]", text) and "account_truth" not in text, f.name

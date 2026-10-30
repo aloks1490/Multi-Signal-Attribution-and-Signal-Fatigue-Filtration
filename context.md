@@ -187,3 +187,9 @@ Full spec: [docs/implementation.md](docs/implementation.md).
 - Holdout after M4: broad 67 alerts (jump re-alerts added), 55% alert precision, 48.6% account precision, 68% recall; budget never binds at this volume.
 - To go live: add `SLACK_WEBHOOK_URL`, `LLM_API_KEY` secrets and `LLM_BASE_URL`, `LLM_MODEL` variables in GitHub.
 - Live since 29 Oct 2026: NVIDIA NIM, model `nvidia/nemotron-3.5-super-vl-120b-a12b`, `LLM_EXTRA_BODY` turns its reasoning off (otherwise it spent the whole token budget thinking and returned no answer). First live post (28 Jul replay) went out with template explanations; after the fix, 3/3 explanations come from the model and pass the checker.
+
+## M5 (30 Oct 2026)
+
+- Built: `activation/hubspot.py` (client: schema, batch upsert by unique key, default associations, task search/create, paging, 429 retries), `activation/crm.py` (pull before dbt; push after the digest), `bronze.hubspot_companies` → `stg_hubspot_companies` → `account_exclusions` (`crm_customer`, `crm_open_deal`, `crm_do_not_contact`), `activation/check.py` + "LLM acceptance check" workflow.
+- Decided defaults: sync prospects that reached Watch or alerted; one task per alert; buying-group contacts of alerted accounts; read exclusions back. Rep-owned fields never written. Pushed domains/emails get a `.example` suffix so synthetic records never collide with real companies.
+- To go live: free HubSpot account for this project, private app token → repo secret `HUBSPOT_TOKEN`.

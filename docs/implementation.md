@@ -1,6 +1,6 @@
 # Signal Engine: Implementation Spec
 
-Status: M1–M4 built · 29 Oct 2026 · owner: Alok Singh
+Status: M1–M5 built · 30 Oct 2026 · owner: Alok Singh
 
 This is the build reference. [context.md](../context.md) explains *why* the design looks like this; this file says *what* gets built, in what shape, and how we know it works.
 
@@ -54,7 +54,7 @@ A company using a competitor (Outreach, Salesloft, Apollo) is not scored higher 
 | Evaluation | Python (pandas) | locked | Reads gold tables + hidden labels |
 | Frontend (M3) | **Streamlit** | locked | Fastest Python UI; free Community Cloud hosting |
 | Frontend (later) | **Reflex** | pin exact version | Planned migration; see §11 |
-| CRM (M5) | **HubSpot free** via private-app API | — | Most common CRM at the target companies |
+| CRM (M5) | **HubSpot free** via private-app token (v3/v4 CRM API) | paths in `activation/hubspot.py` | Most common CRM at the target companies; scores pushed, exclusions read back |
 | Alerts (M4) | Slack incoming webhook (one channel digest) | — | Free |
 | LLM (M4) | Any OpenAI-compatible endpoint, free tier: OpenRouter `:free` models or NVIDIA NIM | model id in config | Writes alert text from a fact sheet; a checker rejects anything not in the facts; template fallback |
 | Scheduling (M4) | GitHub Actions | — | Free for public repos |
@@ -112,6 +112,9 @@ signal-filtering-gtm/
 │   ├── narrate.py               # fact sheet → LLM (OpenAI-compatible) → checker → template fallback
 │   ├── slack.py                 # Block Kit digest + webhook post
 │   ├── run.py                   # replay clock, collect today's alerts, cache, post once
+│   ├── hubspot.py               # minimal HubSpot client: schema, batch upsert, associations, tasks, retries
+│   ├── crm.py                   # M5: pull (HubSpot → warehouse) and push (warehouse → HubSpot)
+│   ├── check.py                 # LLM acceptance check over a sample of alerts
 │   └── __main__.py              # python -m activation
 ├── .github/workflows/           # ci.yml (pytest on push), daily.yml (06:00 UTC weekdays)
 ├── eval/
@@ -392,7 +395,9 @@ Upstream rules:
 
 **`account_fit`**: account_id, fit_points, fit_grade, fit_multiplier.
 
-**`account_exclusions`**: account_id, excluded (bool), reason (`customer` / `competitor` / `open_deal` / `do_not_contact` / `fit_d`).
+**`account_exclusions`**: account_id, excluded (bool), reason (`customer` / `competitor` / `open_deal` / `do_not_contact` / `fit_d`). M5 adds `crm_customer`, `crm_open_deal` and `crm_do_not_contact` from HubSpot.
+
+**`stg_hubspot_companies`** (M5): HubSpot's current lifecycle stage, open deals and do-not-contact flag for synced companies, from `bronze.hubspot_companies` (written by `activation/crm.py pull`; empty until connected).
 
 ### 6.4 Gold
 
@@ -727,7 +732,22 @@ T-P1 (point-in-time) now covers the M2 score, including time-aware people counts
 | daily run | dry run writes the digest and posts nothing; posts once, skips a repeat, re-posts with `--force`; model results are cached |
 | truth wall | activation code never reads the labels |
 
-### 9.9 Later milestones
+### 9.9 M5 (pytest, `tests/test_crm.py`, against an in-memory fake HubSpot)
+
+| Test | Check |
+|---|---|
+| Batching | 250 companies → 3 upsert calls of ≤ 100; repeating creates nothing new |
+| Retries | 429s are retried (Retry-After honoured); gives up after max retries |
+| Schema | group and 9 properties created once (free plan allows 10); second run creates nothing |
+| Paging | reads every page |
+| Dry run | no API calls; plan file written; domains and emails end in `.example`; no rep-owned fields in the payload |
+| Push | companies, contacts (linked to companies) and tasks (linked) created once; a repeat creates no tasks, companies or contacts |
+| Rep-owned fields | a rep's lifecycle stage and do-not-contact survive the next push |
+| The loop | push → rep marks an alerted company as customer → pull → dbt rebuild → exclusion `crm_customer`, no alerts |
+| Not connected | pull without a token changes nothing |
+| Truth wall | the sync never reads labels |
+
+### 9.10 Later milestones
 
 - **M5:** HubSpot client tested against recorded responses; idempotent re-push (same day twice → no duplicates).
 
@@ -741,7 +761,7 @@ T-P1 (point-in-time) now covers the M2 score, including time-aware people counts
 | M2 ✅ | Breadth, sources, spike, high-intent gate, combos, rolling-hour bot window, time-aware people counts, reasons | Holdout: hammerer and binger alerts drop vs M1 (met); at equal alert budgets M2 recall ≥ M1 (met). At each method's own dev-F1 threshold recall dropped 60% → 52% (see §13) |
 | M3 ✅ | Streamlit app: overview (methods, profiles, trade-off curve), alert feed with accept/dismiss, account deep-dive (score history, breakdown, decay, timeline), tuning sandbox, settings (active profile + audit) | Pages load from read-only DB; AppTest smoke tests pass |
 | M4 ✅ | Cooldown + jump override + per-AE budget, LLM explanations (OpenAI-compatible free tier, checker, template fallback), Slack webhook digest, GitHub Actions CI + daily replay run | Daily run builds and (with secrets) posts a digest; explanations cite only facts; tests pass in CI |
-| M5 | HubSpot free sync (score, tier, reason as company properties; exclusions read back) | Idempotent push, dry-run mode |
+| M5 ✅ | HubSpot free sync: company properties (score, tier, reason, headline, last alert), buying-group contacts, one task per alert, exclusions read back (customer, open deal, do-not-contact) | Idempotent push, dry-run mode, rep change in HubSpot stops alerts (tested) |
 | M6 | README write-up: architecture, trade-offs (batch over streaming, synthetic limits), results | Portfolio-ready |
 | Later | Outreach-response model (post-outreach scoring), persona EV analysis, backtest lift per signal, Reflex migration, optional Databricks port | — |
 
@@ -861,3 +881,30 @@ GitHub Actions 06:00 UTC weekdays (or Run workflow)
 | Variable (optional) | `LLM_EXTRA_BODY` | JSON merged into each request for model-specific switches. Reasoning models (e.g. NVIDIA Nemotron 3) think by default and can spend the whole token budget before answering; turn that off with `{"chat_template_kwargs": {"enable_thinking": false}}` |
 
 Each run logs one line per alert: `explain <account>: llm` or `template (<reason>)`, so fallbacks can be diagnosed from the Actions log. Without them the workflow still runs: template explanations, dry-run digest uploaded as an artifact. Free tiers are for prototyping, and free endpoints may log prompts: fine for synthetic data, not for real customer data.
+
+---
+
+## 15. HubSpot sync (M5)
+
+```
+daily run:  generate → crm pull (HubSpot → bronze.hubspot_companies) → dbt build (exclusions now include crm_*)
+            → digest → crm push (warehouse → HubSpot)
+```
+
+**Push** (`python -m activation.crm push`), as of the replay day:
+- **Companies:** prospects that reached Watch or alerted so far in the window (~80–110 on holdout), plus any a rep excluded in HubSpot. Properties in a "Signal Engine" group: `signal_account_id` (unique key for upserts), `signal_score`, `signal_tier` (Hot / Warm / Watch / Below / Excluded), `signal_fit_grade`, `signal_reason`, `signal_headline` (the model's explanation), `signal_last_alert_date`, `signal_owner_ae`, and `signal_do_not_contact` (set by reps, never by the push). Nine custom properties: the free plan reportedly allows ten.
+- **Contacts:** the active buying group of the day's alerts (name, title, email), linked to the company with HubSpot's default association.
+- **Tasks:** one per new alert, due 09:00 UTC on the run day, body = headline, why-now bullets and angle. Searched by subject before creating, so re-runs never duplicate.
+- **Never written:** lifecycle stage, do-not-contact, owners. Those belong to reps.
+- **Synthetic domains are made safe:** every pushed domain and email gets the reserved `.example` suffix (`cox.com.example`), so HubSpot never enriches or links a fake record with a real company, while contacts still match their company.
+- Owners: the free plan has 2 users, so the AE is a text property (`signal_owner_ae`), and tasks are unassigned.
+
+**Pull** (`python -m activation.crm pull`): lifecycle stage, open deals and do-not-contact for synced companies → `bronze.hubspot_companies` → `account_exclusions` adds `crm_customer`, `crm_open_deal`, `crm_do_not_contact`. HubSpot does not publish the internal name of "Number of open deals", so the pull looks it up in the account's property list (`hs_num_open_deals`, else `num_associated_deals`).
+
+**Limits to know:**
+- HubSpot is *current* state, not history: an exclusion read today applies to the replayed day as well. Right for production, slightly off for the replay.
+- API: ~100 requests per 10 s and 250k per day on free; a full push is ~10–30 calls. HubSpot is moving to dated API versions (`/crm/objects/2026-09/...`); the client uses the v3/v4 paths, all built in one place.
+
+**To switch it on:** create a free HubSpot account for this project only → Settings → Integrations → Private Apps (newer accounts: Development → Legacy apps) → create an app with these scopes: `crm.objects.companies.read`, `crm.objects.companies.write`, `crm.schemas.companies.read`, `crm.schemas.companies.write`, `crm.objects.contacts.read`, `crm.objects.contacts.write`, `crm.objects.deals.read`, plus any task scopes your account lists. Copy the token into the repo secret `HUBSPOT_TOKEN`. A missing scope shows up as a 403 naming it in the "Sync CRM" step.
+
+**LLM acceptance check:** Actions → "LLM acceptance check" → Run workflow explains a sample of alerts (default 40) with the configured model and reports how many pass the fact checker and why the rest failed.

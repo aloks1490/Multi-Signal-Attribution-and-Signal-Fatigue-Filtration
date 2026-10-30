@@ -96,6 +96,12 @@ def write(w: World, db_path: str | Path) -> dict[str, int]:
             con.execute(f"CREATE TABLE {name} AS SELECT * FROM _df")
             con.unregister("_df")
             counts[name] = len(df)
+        # The CRM export lands here (activation/crm.py pull). Empty until HubSpot is connected, but always present
+        # so dbt has a stable source.
+        con.execute("""CREATE TABLE bronze.hubspot_companies (
+            signal_account_id VARCHAR, hubspot_id VARCHAR, lifecyclestage VARCHAR, open_deals INTEGER,
+            do_not_contact BOOLEAN, synced_at TIMESTAMP)""")
+        counts["bronze.hubspot_companies"] = 0
         con.execute("ALTER TABLE labels.account_truth ALTER intent_start_date TYPE DATE")
         con.execute("ALTER TABLE labels.account_truth ALTER meeting_date TYPE DATE")
     finally:

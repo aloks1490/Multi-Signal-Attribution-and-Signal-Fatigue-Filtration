@@ -46,7 +46,8 @@ models:
         data_tests: [unique, not_null]
       - name: reason
         data_tests:
-          - accepted_values: {arguments: {values: ['customer', 'competitor', 'open_deal', 'do_not_contact', 'fit_d']}}
+          - accepted_values: {arguments: {values: ['customer', 'competitor', 'open_deal', 'do_not_contact',
+                                                   'crm_customer', 'crm_open_deal', 'crm_do_not_contact', 'fit_d']}}
 
 unit_tests:
   - name: t_u4_daily_cap_one_row_per_visitor_type_day
