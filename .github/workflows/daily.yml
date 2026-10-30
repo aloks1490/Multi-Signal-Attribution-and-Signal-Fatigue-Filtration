@@ -20,6 +20,10 @@ on:
         description: "Post even if this day was already posted (e.g. to re-send a corrected digest)"
         type: boolean
         default: false
+      slack:
+        description: "Post the Slack digest (untick to re-run only the HubSpot sync)"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -61,10 +65,12 @@ jobs:
           AS_OF: ${{ inputs.as_of }}
           DRY_RUN: ${{ inputs.dry_run }}
           FORCE: ${{ inputs.force }}
+          SLACK: ${{ inputs.slack }}
         run: |
           args=(--db data/holdout.duckdb)
           if [ -n "$AS_OF" ]; then args+=(--as-of "$AS_OF"); fi
-          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          # Explanations are still built when Slack is off: the HubSpot sync uses them for headlines and tasks.
+          if [ "$DRY_RUN" = "true" ] || [ "$SLACK" = "false" ]; then args+=(--dry-run); fi
           if [ "$FORCE" = "true" ]; then args+=(--force); fi
           uv run python -m activation "${args[@]}"
       - name: Sync CRM (warehouse → HubSpot)

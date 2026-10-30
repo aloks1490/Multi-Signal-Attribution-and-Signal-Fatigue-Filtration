@@ -191,6 +191,6 @@ Full spec: [docs/implementation.md](docs/implementation.md).
 ## M5 (30 Oct 2026)
 
 - Built: `activation/hubspot.py` (client: schema, batch upsert by unique key, default associations, task search/create, paging, 429 retries), `activation/crm.py` (pull before dbt; push after the digest), `bronze.hubspot_companies` → `stg_hubspot_companies` → `account_exclusions` (`crm_customer`, `crm_open_deal`, `crm_do_not_contact`), `activation/check.py` + "LLM acceptance check" workflow.
-- Decided defaults: sync prospects that reached Watch or alerted; one task per alert; buying-group contacts of alerted accounts; read exclusions back. Rep-owned fields never written. Pushed domains/emails get a `.example` suffix so synthetic records never collide with real companies.
+- Decided defaults: sync prospects that reached Watch or alerted; one task per alert; buying-group contacts of alerted accounts; read exclusions back. Rep-owned fields never written. Pushed domains/emails become subdomains of the reserved `example.com` (`cox-com.example.com`) so synthetic records never collide with real companies; the first live run showed HubSpot rejects a bare `.example` ending as an invalid email.
 - To go live: free HubSpot account for this project, private app token → repo secret `HUBSPOT_TOKEN`.
 - LLM acceptance check (40 sampled holdout alerts, Nemotron via NIM, reasoning off): 36/40 → 39/40 after teaching the checker possessives, plurals and hyphenated forms; the last rejection ("SDR-related") is also fixed. All rejections were false alarms, none were invented facts.

@@ -28,9 +28,19 @@ from app import state
 
 GROUP = "signal_engine"
 # Synthetic companies can share domains with real ones (e.g. cox.com). HubSpot enriches companies by domain and links
-# contacts by email domain, so every pushed domain and email gets the reserved .example suffix (RFC 2606): it can never
-# collide with a real company, and contacts still match their company.
-SYNTHETIC_SUFFIX = ".example"
+# contacts by email domain, so every pushed domain becomes a subdomain of example.com, which is reserved for examples
+# (RFC 2606): cox.com → cox-com.example.com, john.house@cox-com.example.com. It can never match a real company, it stays
+# unique per company, and it passes HubSpot's email check (a bare ".example" ending is rejected as an invalid email).
+SAFE_PARENT = "example.com"
+
+
+def safe_domain(domain: str) -> str:
+    return domain.replace(".", "-") + "." + SAFE_PARENT
+
+
+def safe_email(email: str) -> str:
+    local, domain = email.rsplit("@", 1)
+    return f"{local}@{safe_domain(domain)}"
 TIERS = ["Hot", "Warm", "Watch", "Below", "Excluded"]
 OPEN_DEAL_CANDIDATES = ("hs_num_open_deals", "num_associated_deals")  # HubSpot does not publish the internal name; use the first that exists
 
@@ -150,7 +160,7 @@ def plan(db: str | Path, as_of: date | None, today: date) -> dict:
     for c in companies:
         props = {
             "name": c["company_name"],
-            "domain": c["domain"] + SYNTHETIC_SUFFIX,
+            "domain": safe_domain(c["domain"]),
             "signal_score": str(round(c["engine_score"])),
             "signal_tier": tier(c),
             "signal_fit_grade": c["fit_grade"],
@@ -168,7 +178,7 @@ def plan(db: str | Path, as_of: date | None, today: date) -> dict:
     contacts, tasks = [], []
     for a in today_alerts:
         for p in a["people"] or []:
-            email = p["email"] + SYNTHETIC_SUFFIX
+            email = safe_email(p["email"])
             contacts.append({"account_id": a["account_id"], "email": email, "properties": {
                 "email": email, "firstname": p["first_name"], "lastname": p["last_name"], "jobtitle": p["title"]}})
         story = headlines[(headlines.account_id == a["account_id"]) & (headlines.alert_date.dt.date == as_of)] if len(headlines) else headlines

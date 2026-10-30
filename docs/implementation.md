@@ -896,7 +896,7 @@ daily run:  generate → crm pull (HubSpot → bronze.hubspot_companies) → dbt
 - **Contacts:** the active buying group of the day's alerts (name, title, email), linked to the company with HubSpot's default association.
 - **Tasks:** one per new alert, due 09:00 UTC on the run day, body = headline, why-now bullets and angle. Searched by subject before creating, so re-runs never duplicate.
 - **Never written:** lifecycle stage, do-not-contact, owners. Those belong to reps.
-- **Synthetic domains are made safe:** every pushed domain and email gets the reserved `.example` suffix (`cox.com.example`), so HubSpot never enriches or links a fake record with a real company, while contacts still match their company.
+- **Synthetic domains are made safe:** every pushed domain becomes a subdomain of the reserved `example.com` (`cox.com` → `cox-com.example.com`, `john.house@cox-com.example.com`), so HubSpot never enriches or links a fake record with a real company, contacts still match their company, and emails pass HubSpot's validation (a bare `.example` ending is rejected as an invalid email: found on the first live run).
 - Owners: the free plan has 2 users, so the AE is a text property (`signal_owner_ae`), and tasks are unassigned.
 
 **Pull** (`python -m activation.crm pull`): lifecycle stage, open deals and do-not-contact for synced companies → `bronze.hubspot_companies` → `account_exclusions` adds `crm_customer`, `crm_open_deal`, `crm_do_not_contact`. HubSpot does not publish the internal name of "Number of open deals", so the pull looks it up in the account's property list (`hs_num_open_deals`, else `num_associated_deals`).

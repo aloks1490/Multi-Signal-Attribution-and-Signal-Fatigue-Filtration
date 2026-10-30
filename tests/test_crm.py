@@ -158,8 +158,11 @@ def test_dry_run_makes_no_calls_and_writes_the_plan(crm_env):
     r = crm.push(crm_env["db"], None, crm_env["day"], out_dir=crm_env["out"])
     plan = json.loads(Path(r["file"]).read_text())
     assert r["status"] == "dry_run" and r["companies"] > 0 and r["tasks"] >= 1
-    assert all(c["domain"].endswith(".example") for c in plan["companies"])
-    assert all(c["email"].endswith(".example") for c in plan["contacts"])
+    assert all(c["domain"].endswith(".example.com") for c in plan["companies"])
+    assert all(c["email"].endswith(".example.com") for c in plan["contacts"])
+    # each contact's email domain is its company's pushed domain, so HubSpot links them consistently
+    domains = {c["signal_account_id"]: c["domain"] for c in plan["companies"]}
+    assert all(c["email"].split("@")[1] == domains[c["account_id"]] for c in plan["contacts"])
     assert not {"lifecyclestage", "signal_do_not_contact"} & set().union(*[set(c) for c in plan["companies"]])
 
 
@@ -217,6 +220,13 @@ def test_rep_marks_customer_in_hubspot_and_alerts_stop(crm_env, tmp_path):
 
 def test_pull_without_token_changes_nothing(crm_env):
     assert crm.pull(crm_env["db"], None) == {"status": "not_connected", "companies": 0}
+
+
+def test_safe_domains_are_valid_and_unique():
+    assert crm.safe_domain("cox.com") == "cox-com.example.com"
+    assert crm.safe_email("john.house@cox.com") == "john.house@cox-com.example.com"
+    assert crm.safe_domain("acme.io") != crm.safe_domain("acme.com")
+    assert re.fullmatch(r"[^@\s]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.com", crm.safe_email("a.b@x.ai"))
 
 
 def test_crm_sync_never_reads_truth_labels():
