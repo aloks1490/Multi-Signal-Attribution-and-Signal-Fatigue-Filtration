@@ -1,6 +1,6 @@
 # Signal Engine: Implementation Spec
 
-Status: M1–M5 built · 30 Oct 2026 · owner: Alok Singh
+Status: M1–M6 complete · 31 Oct 2026 · owner: Alok Singh
 
 This is the build reference. [context.md](../context.md) explains *why* the design looks like this; this file says *what* gets built, in what shape, and how we know it works.
 
@@ -762,7 +762,7 @@ T-P1 (point-in-time) now covers the M2 score, including time-aware people counts
 | M3 ✅ | Streamlit app: overview (methods, profiles, trade-off curve), alert feed with accept/dismiss, account deep-dive (score history, breakdown, decay, timeline), tuning sandbox, settings (active profile + audit) | Pages load from read-only DB; AppTest smoke tests pass |
 | M4 ✅ | Cooldown + jump override + per-AE budget, LLM explanations (OpenAI-compatible free tier, checker, template fallback), Slack webhook digest, GitHub Actions CI + daily replay run | Daily run builds and (with secrets) posts a digest; explanations cite only facts; tests pass in CI |
 | M5 ✅ | HubSpot free sync: company properties (score, tier, reason, headline, last alert), buying-group contacts, one task per alert, exclusions read back (customer, open deal, do-not-contact) | Idempotent push, dry-run mode, rep change in HubSpot stops alerts (tested) |
-| M6 | README write-up: architecture, trade-offs (batch over streaming, synthetic limits), results | Portfolio-ready |
+| M6 ✅ | README write-up: problem, results, architecture diagram, scoring, evaluation design, trade-offs, limits, screenshots (`docs/img/`) | Portfolio-ready |
 | Later | Outreach-response model (post-outreach scoring), persona EV analysis, backtest lift per signal, Reflex migration, optional Databricks port | — |
 
 ---
@@ -819,7 +819,7 @@ Run with `make app` (http://localhost:8501). The sidebar holds the data source (
 
 ---
 
-## 13. Results (holdout seed 7)
+## 13. Results (holdout seed 7, after the M4 alert rules)
 
 Full tables: [results.md](results.md). 2,000 accounts, 25 positives (20 planted buyers, 5 random converters), 13 weeks, 5 AEs. M1 numbers here are re-run on the M2 silver layer (rolling bot window, one-hour delay for web events), so they differ slightly from the M1 commit.
 
@@ -830,22 +830,23 @@ Full tables: [results.md](results.md). 2,000 accounts, 25 positives (20 planted 
 | Per-event pings | 1,149 | 17.7 | 7.6% | 96% | 20 days |
 | Static points precise (F1) | 81 | 1.2 | 19.8% | 64% | 12 days |
 | Static points broad (F2) | 92 | 1.4 | 20.7% | 76% | 11 days |
-| Engine M1 precise (F1) | 27 | 0.4 | 55.6% | 60% | 8 days |
-| Engine M2 precise (F1) | 16 | 0.2 | 86.7% | 52% | 9 days |
-| **Engine M2 broad (F2), active** | **44** | **0.7** | **48.6%** | **68%** | **11 days** |
+| Engine M1 precise (F1) | 43 | 0.7 | 55.6% | 60% | 8 days |
+| Engine M2 precise (F1) | 26 | 0.4 | 86.7% | 52% | 9 days |
+| **Engine M2 broad (F2), active** | **67** | **1.0** | **48.6%** | **68%** | **11 days** |
 
 **Equal alert budget (the fair ranking comparison):**
 
 | Alerts in 13 weeks | Static points | Engine M1 | Engine M2 |
 |---:|---:|---:|---:|
-| ~15 | 7% / 4% | 62% / 32% | **87% / 52%** |
-| ~40 | 15% / 24% | 49% / 64% | **55% / 68%** |
-| ~60 | 17% / 40% | 38% / 64% | **40% / 68%** |
+| ~15 | 7% / 4% | 62% / 32% | **83% / 40%** |
+| ~25 | 4% / 4% | 69% / 44% | **87% / 52%** |
+| ~40 | 15% / 24% | 63% / 60% | **78%** / 56% |
+| ~60 | 17% / 40% | 49% / 64% | **55% / 68%** |
 
 (precision per account / recall)
 
 What it shows:
-- **M2 ranks better than M1 at every budget.** F1 picks a very strict point for M2 (16 alerts in 13 weeks against a capacity of 650), because M2 boosts committee buyers far above 2-person "quiet" buyers. The broad (F2) profile fixes the operating point: 44 alerts, 68% recall (17 of 20 planted buyers), about half the alerted accounts real buyers.
+- **M2 is more precise than M1 at every budget and recalls as many or more buyers at three of four** (at ~40 alerts M1 catches slightly more: 60% vs 56%). An earlier version of this section, written before the M4 alert rules, said M2 won on both at every budget; the M4 cooldown and score-jump rules changed the counts. F1 picks a very strict point for M2 (26 alerts in 13 weeks against a capacity of 650), because M2 boosts committee buyers far above 2-person "quiet" buyers. The broad (F2) profile sets a better operating point: 67 alerts (jump re-alerts included), 68% recall (17 of 20 planted buyers), about half the alerted accounts real buyers.
 - **Static points with F2 catch more (76%) but need twice the alerts at under half the precision**, and at equal budgets static points fall far behind (~40 alerts: 24% recall vs 68%).
 - **The traps M2 targets now mostly stay quiet.** Hard-negative accounts alerted, M1 → M2: content_binger 2 → 0, pricing_hammerer 7 → 2; stalled_trial, trigger_only, bot_burst, customer, open-deal and low-fit all 0.
 - **Missed by M2 broad:** 5 random converters (nothing to find), 2 quiet buyers, 1 PLG buyer. Quiet buyers remain the weak spot: two people, one source, no product use. Broad lets 4 pricing hammerers and 1 stalled trial through (precise: 2 and 0).

@@ -1,7 +1,7 @@
 """Shared Streamlit pieces: path bootstrap, sidebar controls and cached wrappers around app.queries."""
 from __future__ import annotations
 
-import getpass
+import os
 import sys
 from pathlib import Path
 
@@ -65,7 +65,8 @@ def sidebar() -> dict:
         ) or active
         st.caption(f"{q.PROFILE_LABELS[explore]}")
         st.caption(f"Reps currently receive: **{PROFILE_SHORT[active]}**")
-        user = st.text_input("Your name", value=st.session_state.get("user", getpass.getuser()), key="user")
+        user = st.text_input("Your name", value=st.session_state.get("user", os.environ.get("SIGNAL_USER", "")),
+                             placeholder="for feedback and the audit log", key="user").strip() or "anonymous"
     return {"db": db, "db_name": name, "db_key": _key(db), "explore": explore, "active": active, "user": user}
 
 

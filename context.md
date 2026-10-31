@@ -194,3 +194,10 @@ Full spec: [docs/implementation.md](docs/implementation.md).
 - Decided defaults: sync prospects that reached Watch or alerted; one task per alert; buying-group contacts of alerted accounts; read exclusions back. Rep-owned fields never written. Pushed domains/emails become subdomains of the reserved `example.com` (`cox-com.example.com`) so synthetic records never collide with real companies; the first live run showed HubSpot rejects a bare `.example` ending as an invalid email.
 - To go live: free HubSpot account for this project, private app token → repo secret `HUBSPOT_TOKEN`.
 - LLM acceptance check (40 sampled holdout alerts, Nemotron via NIM, reasoning off): 36/40 → 39/40 after teaching the checker possessives, plurals and hyphenated forms; the last rejection ("SDR-related") is also fixed. All rejections were false alarms, none were invented facts.
+
+## M6 (31 Oct 2026)
+
+- README rewritten for the portfolio: problem, results (holdout), mermaid architecture of the full loop, scoring formula in plain words, evaluation design (truth wall, traps, point-in-time, dev/holdout, equal budgets), trade-offs, limits, stack, run it, screenshots in `docs/img/` (captured with headless Chrome from the running app).
+- Corrected an overclaim: since the M4 rules, M2 beats M1 on precision at every budget but on recall only at 3 of 4 (at ~40 alerts M1 recalls 60% vs 56%).
+- LinkedIn post draft (two versions) in `drafts/linkedin_post.md` (gitignored, not published).
+- App: log-scale chart now labels 1/10/100; "Your name" starts empty (placeholder) instead of the OS username.

@@ -12,3 +12,4 @@ logs/
 dbt_project/.user.yml
 .claude/
 out/
+drafts/

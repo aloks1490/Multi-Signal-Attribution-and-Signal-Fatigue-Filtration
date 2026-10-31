@@ -38,7 +38,7 @@ def weekly_alerts(df: pd.DataFrame) -> go.Figure:
     fig = go.Figure()
     for method, g in df.groupby("method", sort=False):
         fig.add_bar(x=g["week_start"], y=g["alerts"], name=method, marker_color=_color(method))
-    fig.update_yaxes(type="log", title="alerts per week (log scale)")
+    fig.update_yaxes(type="log", dtick=1, title="alerts per week (log scale)")  # label 1, 10, 100 only
     return _layout(fig, barmode="group")
 
 
