@@ -14,7 +14,7 @@ ctx = ui.sidebar()
 st.title("Settings")
 
 st.subheader("Active profile")
-st.markdown("This decides which alerts reach reps (Slack and HubSpot from M4). The **Explore** toggle in the sidebar "
+st.markdown("This decides which alerts reach reps in the Slack digest and the HubSpot sync. The **Explore** toggle in the sidebar "
             "only changes what you see; this setting changes what everyone receives.")
 summary = q.profile_summary(ui.evaluation(ctx["db_key"])).set_index("key")
 for key in q.PROFILES:
@@ -63,6 +63,9 @@ st.subheader("Daily digest runs")
 st.caption("Each run of `python -m activation` (locally or in GitHub Actions): the replayed day, what was sent and how explanations were made.")
 runs = state.activation_log()
 if len(runs):
-    st.dataframe(runs, hide_index=True, use_container_width=True)
+    runs["run_date"] = runs["run_date"].dt.date
+    runs["created_at"] = runs["created_at"].dt.strftime("%Y-%m-%d %H:%M")
+    st.dataframe(runs.rename(columns={"run_date": "simulated day", "n_alerts": "alerts", "created_at": "ran at"}),
+                 hide_index=True, use_container_width=True)
 else:
     st.caption("No digest runs yet.")

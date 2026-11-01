@@ -78,23 +78,32 @@ All weights, half-lives, multipliers and bonuses are CSV seeds in [`dbt_project/
 
 A GitHub Actions workflow runs every weekday at 06:00 UTC: rebuild the world, read exclusions back from HubSpot, score, explain, post, sync. Because the data is synthetic, each run replays one day of the quarter.
 
-**Explanations.** An open model on NVIDIA NIM's free tier (`nemotron-3.5-super`) gets a fact sheet per alert and writes the why-now. A checker rejects any output that mentions a person, number or name not in the facts and falls back to a template. On a 40-alert sample, 39 passed; every rejection was a wording false alarm, not an invented fact. One digest entry, exactly as the model wrote it (GitHub run, 28 Jul replay; the people are synthetic):
+**Explanations.** An open model on NVIDIA NIM's free tier (`nemotron-3.5-super`) gets a fact sheet per alert and writes the why-now. A checker rejects any output that mentions a person, number or name not in the facts and falls back to a template. On a 40-alert sample, 39 passed; every rejection was a wording false alarm, not an invented fact.
 
-> **Cox, Avery and Walters** · score 85 · fit A · score jumped<br>
-> Cox, Avery and Walters shows strong BOFU intent with 8 pricing page views and a new Head of Sales Development<br>
-> • 8 pricing page views in the last 14 days indicate active buying interest<br>
-> • A new Head of Sales Development started on 2026-05-13, creating a window to engage a new sales leader<br>
-> • 4 comparison page views show the account is evaluating vendors<br>
-> *Contact first:* John House (SDR): John House is an SDR who viewed pricing and comparison pages, showing direct buying intent; Jack Carson (Sales Ops Specialist): Jack Carson is a Sales Ops Specialist who clicked an email, indicating engagement with outreach<br>
-> *Angle:* Ask John House how Seqly can help the SDR team hit quota under the new Head of Sales Development.
+**Slack:** one digest message a day: demo requests first, then each AE's new alerts with the model's headline, reasons, who to contact first and an angle. The digest as it was posted (28 Jul replay; companies and people are synthetic):
 
-**Slack:** one digest message: demo requests first, then each AE's new alerts with headline, reasons, who to contact and the angle.
+![Slack digest posted by the daily run](docs/img/slack_digest.png)
 
-**HubSpot:** score, tier, reason and headline on each company record, the active buying group as contacts, and one task per alert. Before scoring, the run reads HubSpot back: if a rep marks a company as a customer, adds an open deal or ticks do-not-contact, it stops alerting. Synthetic domains are pushed as subdomains of the reserved `example.com`, so fake records never match real companies.
+**HubSpot:** score, tier, reason and headline on each company record, the active buying group as contacts, and one task per alert, linked to the company. Before scoring, the run reads HubSpot back: if a rep marks a company as a customer, adds an open deal or ticks do-not-contact, it stops alerting. Synthetic domains are pushed as subdomains of the reserved `example.com`, so fake records never match real companies.
+
+| Companies ranked by Signal score in HubSpot | A company record: tier and score, the alert task, the buying group |
+|---|---|
+| ![HubSpot companies view sorted by Signal score](docs/img/hubspot_companies.png) | ![HubSpot company record with Signal Engine fields, task and contacts](docs/img/hubspot_record.png) |
+
+**The app** (Streamlit) shows the same engine from the inside:
 
 | Account deep-dive: score history, the formula step by step, decay | Alert feed with reasons and accept / dismiss |
 |---|---|
 | ![Account deep-dive](docs/img/account.png) | ![Alert feed](docs/img/alerts.png) |
+
+<details>
+<summary>More screens: tuning sandbox and settings</summary>
+
+| Tuning sandbox: edit weights and rules, rebuild on a copy of the dev data | Settings: which profile reps receive, with confirmation and an audit log |
+|---|---|
+| ![Tuning sandbox](docs/img/sandbox.png) | ![Settings](docs/img/settings.png) |
+
+</details>
 
 ## Why the evaluation can be trusted
 

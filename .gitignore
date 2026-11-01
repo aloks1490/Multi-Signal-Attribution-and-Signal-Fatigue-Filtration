@@ -13,3 +13,4 @@ dbt_project/.user.yml
 .claude/
 out/
 drafts/
+docs/img/Screenshot*
