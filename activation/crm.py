@@ -229,6 +229,21 @@ def push(db: str | Path, hs: HubSpot | None, as_of: date | None = None, dry_run:
     return result
 
 
+def inspect(hs: HubSpot) -> list[str]:
+    """Read-only check: every Signal Engine task and the companies it is linked to."""
+    names = {str(c["id"]): (c["properties"].get("name") or "?") for c in hs.list_all("companies", ["name", "signal_account_id"])
+             if c["properties"].get("signal_account_id")}
+    lines = [f"synced companies: {len(names)}"]
+    tasks = [t for t in hs.list_all("tasks", ["hs_task_subject", "hs_task_status", "hs_timestamp"])
+             if (t["properties"].get("hs_task_subject") or "").startswith("Signal Engine")]
+    lines.append(f"signal engine tasks: {len(tasks)}")
+    for t in tasks:
+        linked = hs.associated_ids("tasks", str(t["id"]), "companies")
+        lines.append(f"  task {t['id']} '{t['properties']['hs_task_subject']}' status={t['properties'].get('hs_task_status')} "
+                     f"→ companies {[names.get(c, c) for c in linked] or 'NONE'}")
+    return lines
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Sync with HubSpot.")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -239,8 +254,14 @@ def main() -> None:
     ps.add_argument("--as-of", type=date.fromisoformat)
     ps.add_argument("--dry-run", action="store_true")
     ps.add_argument("--out", default="out")
+    sub.add_parser("inspect", help="read-only: list Signal Engine tasks and their linked companies")
     args = ap.parse_args()
     hs = client_from_env()
+    if args.cmd == "inspect":
+        if hs is None:
+            raise SystemExit("HUBSPOT_TOKEN is not set")
+        print("\n".join(inspect(hs)))
+        return
     result = pull(args.db, hs) if args.cmd == "pull" else push(args.db, hs, args.as_of, args.dry_run, Path(args.out))
     print(" · ".join(f"{k}={v}" for k, v in result.items()))
 

@@ -97,10 +97,17 @@ class HubSpot:
         return out
 
     def associate_default(self, from_type: str, to_type: str, pairs: list[tuple[str, str]]) -> None:
-        """Link records with HubSpot's default association (no association type ids needed)."""
+        """Link records with HubSpot's default association (no association type ids needed).
+        A 207 reply can carry per-item errors; those are raised, never ignored."""
         for part in chunks(pairs):
             body = {"inputs": [{"from": {"id": a}, "to": {"id": b}} for a, b in part]}
-            self.request("POST", f"/crm/v4/associations/{from_type}/{to_type}/batch/associate/default", json=body)
+            data = self.request("POST", f"/crm/v4/associations/{from_type}/{to_type}/batch/associate/default", json=body)
+            if data.get("numErrors") or data.get("errors"):
+                raise HubSpotError(f"associate {from_type}→{to_type}: {str(data.get('errors'))[:500]}")
+
+    def associated_ids(self, from_type: str, object_id: str, to_type: str) -> list[str]:
+        data = self.request("GET", f"/crm/v4/objects/{from_type}/{object_id}/associations/{to_type}")
+        return [str(r.get("toObjectId")) for r in data.get("results", [])]
 
     def find_by(self, object_type: str, prop: str, value: str, properties: list[str]) -> list[dict]:
         body = {"filterGroups": [{"filters": [{"propertyName": prop, "operator": "EQ", "value": value}]}],

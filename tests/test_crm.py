@@ -34,6 +34,7 @@ class FakeHubSpot:
         self.assoc: set[tuple[str, str, str, str]] = set()
         self.next_id = 100
         self.fail_first = fail_first
+        self.reject_assoc: set[tuple[str, str]] = set()
         self.log: list[tuple[str, str]] = []
 
     def _id(self) -> str:
@@ -77,9 +78,15 @@ class FakeHubSpot:
                 results.append({"id": oid})
             return Resp(201, {"status": "COMPLETE", "results": results})
         if m := re.fullmatch(r"/crm/v4/associations/(\w+)/(\w+)/batch/associate/default", path):
+            if (m[1], m[2]) in self.reject_assoc:
+                return Resp(207, {"status": "COMPLETE", "results": [], "numErrors": 1,
+                                  "errors": [{"message": f"cannot associate {m[1]} to {m[2]}"}]})
             for inp in json["inputs"]:
                 self.assoc.add((m[1], inp["from"]["id"], m[2], inp["to"]["id"]))
             return Resp(200, {"status": "COMPLETE", "results": []})
+        if m := re.fullmatch(r"/crm/v4/objects/(\w+)/(\w+)/associations/(\w+)", path):
+            hits = [b for a, aid, c, b in self.assoc if a == m[1] and aid == m[2] and c == m[3]]
+            return Resp(200, {"results": [{"toObjectId": int(h)} for h in hits]})
         if m := re.fullmatch(r"/crm/v3/objects/(\w+)/search", path):
             f = json["filterGroups"][0]["filters"][0]
             hits = [{"id": oid, "properties": o} for oid, o in self.objects[m[1]].items() if o.get(f["propertyName"]) == f["value"]]
@@ -216,6 +223,21 @@ def test_rep_marks_customer_in_hubspot_and_alerts_stop(crm_env, tmp_path):
     finally:
         con.close()
     assert reason == "crm_customer" and alerts == 0
+
+
+def test_association_errors_are_raised_not_swallowed(crm_env):
+    fake = FakeHubSpot()
+    fake.reject_assoc.add(("tasks", "companies"))
+    with pytest.raises(HubSpotError, match="associate tasks→companies"):
+        crm.push(crm_env["db"], client(fake), crm_env["day"], out_dir=crm_env["out"])
+
+
+def test_inspect_lists_tasks_and_their_companies(crm_env):
+    fake = FakeHubSpot()
+    crm.push(crm_env["db"], client(fake), crm_env["day"], out_dir=crm_env["out"])
+    lines = crm.inspect(client(fake))
+    task_lines = [l for l in lines if l.strip().startswith("task ")]
+    assert task_lines and all("NONE" not in l for l in task_lines)
 
 
 def test_pull_without_token_changes_nothing(crm_env):
