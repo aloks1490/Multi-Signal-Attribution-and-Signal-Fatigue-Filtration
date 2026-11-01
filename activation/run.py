@@ -66,7 +66,9 @@ def collect(db: str | Path, as_of: date | None, today: date) -> dict:
         "held_by_cooldown": today_decisions.get("cooldown", 0),
         "deferred": today_decisions.get("deferred", 0),
     }
-    return {"as_of": as_of, "profile": profile, "alerts": alerts, "handraises": handraises, "week": week}
+    start, end = date.fromisoformat(params["eval_start"]), date.fromisoformat(params["eval_end"])
+    replay = {"day": (as_of - start).days + 1, "total": (end - start).days + 1, "posted": today}
+    return {"as_of": as_of, "profile": profile, "alerts": alerts, "handraises": handraises, "week": week, "replay": replay}
 
 
 def explain(alerts: list[dict], cfg: narrate.LLMConfig | None, caller: Callable = narrate.call_llm) -> dict[str, int]:
@@ -94,7 +96,7 @@ def run(db: str | Path, as_of: date | None = None, dry_run: bool = False, out_di
     data = collect(db, as_of, today or date.today())
     counts = explain(data["alerts"], narrate.LLMConfig.from_env(), caller)
     payload = slack.build_digest(data["as_of"], data["profile"], data["alerts"], data["handraises"], data["week"],
-                                 os.environ.get("APP_BASE_URL"))
+                                 os.environ.get("APP_BASE_URL"), data["replay"])
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"digest_{data['as_of']}.json"
     out_file.write_text(json.dumps(payload, indent=2, default=str))

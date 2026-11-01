@@ -19,15 +19,22 @@ def _link(app_url: str | None, account_id: str, label: str) -> str:
     return f"*<{app_url.rstrip('/')}/account?account={account_id}|{esc(label)}>*"
 
 
-def build_digest(as_of: date, profile: str, alerts: list[dict], handraises: list[dict], week: dict, app_url: str | None) -> dict:
+def build_digest(as_of: date, profile: str, alerts: list[dict], handraises: list[dict], week: dict, app_url: str | None,
+                 replay: dict | None = None) -> dict:
     """alerts: dicts with account_id, company_name, owner_ae_id, score, fit_grade, alert_kind, narrative, people.
     handraises: dicts with account_id, company_name, owner_ae_id.
-    week: alerts_this_week, capacity, held_by_cooldown, deferred."""
-    title = f"Signal Engine · {as_of:%a %d %b %Y}"
+    week: alerts_this_week, capacity, held_by_cooldown, deferred.
+    replay: day, total, posted. The data is a fixed synthetic quarter, so the header names the simulated day and
+    says when it was posted; otherwise a replayed date reads like a wrong one."""
+    if replay:
+        title = f"Signal Engine · simulated {as_of:%a %d %b %Y} (day {replay['day']} of {replay['total']})"
+        when = f"posted {replay['posted']:%a %d %b %Y} · replaying a synthetic quarter, one day per run · "
+    else:
+        title, when = f"Signal Engine · {as_of:%a %d %b %Y}", ""
     blocks: list[dict] = [
         {"type": "header", "text": {"type": "plain_text", "text": title}},
         {"type": "context", "elements": [{"type": "mrkdwn", "text":
-            f"*{len(alerts)}* new account alerts · *{len(handraises)}* demo requests · profile *{esc(profile)}*"}]},
+            f"{when}*{len(alerts)}* new account alerts · *{len(handraises)}* demo requests · profile *{esc(profile)}*"}]},
     ]
     if handraises:
         lines = "\n".join(f"• {_link(app_url, h['account_id'], h['company_name'])} asked for a demo · owner {esc(h['owner_ae_id'])}"

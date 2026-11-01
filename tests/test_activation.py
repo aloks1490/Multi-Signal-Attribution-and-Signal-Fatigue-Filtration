@@ -184,6 +184,21 @@ def test_digest_escapes_and_sections():
     assert "Quiet days are the point" in json.dumps(quiet)
 
 
+def test_digest_header_names_the_simulated_day_and_post_date():
+    week = {"alerts_this_week": 0, "capacity": 50, "held_by_cooldown": 0, "deferred": 0}
+    p = slack.build_digest(date(2026, 9, 25), "broad", [], [], week, None,
+                           {"day": 89, "total": 91, "posted": date(2026, 10, 30)})
+    assert p["blocks"][0]["text"]["text"] == "Signal Engine · simulated Fri 25 Sep 2026 (day 89 of 91)"
+    assert "posted Fri 30 Oct 2026" in p["blocks"][1]["elements"][0]["text"]
+    assert len(p["blocks"][0]["text"]["text"]) <= 150  # Slack's header limit
+
+
+def test_run_reports_replay_position(act_env):
+    r = run(act_env["db"], date(2026, 9, 25), out_dir=act_env["out"], today=date(2026, 10, 30))
+    header = json.loads(Path(r["file"]).read_text())["blocks"][0]["text"]["text"]
+    assert header == "Signal Engine · simulated Fri 25 Sep 2026 (day 89 of 91)"
+
+
 # ---------- replay clock ----------
 
 def test_replay_clock_walks_the_window_and_loops():

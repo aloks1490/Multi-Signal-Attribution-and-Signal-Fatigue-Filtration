@@ -865,7 +865,7 @@ GitHub Actions 06:00 UTC weekdays (or Run workflow)
   → explanation per alert (cache → LLM → checker → template) → Slack digest (or dry-run file)
 ```
 
-- **Replay clock.** The synthetic world is fixed, so each run treats one day of the 13-week window as "today": `eval_start + (days since replay_launch_date mod 91)`. Slack walks through the quarter a day at a time. `--as-of` picks a day by hand.
+- **Replay clock.** The synthetic world is fixed, so each run treats one day of the 13-week window as "today": `eval_start + (days since replay_launch_date mod 91)`. Slack walks through the quarter a day at a time. `--as-of` picks a day by hand. The digest header names the simulated day and its position, plus the real post date ("Signal Engine · simulated Fri 25 Sep 2026 (day 89 of 91)" / "posted Fri 30 Oct 2026"), so a replayed date never reads as a wrong one. The clock starts at day 1 on Mon 2 Nov 2026 and weekdays line up (Monday runs replay Mondays).
 - **Truth wall.** Activation reads the warehouse read-only and never touches the labels; the digest shows only what a real team would know.
 - **State.** Narrative cache and post log go to `data/app_state.duckdb` (never the warehouse), so the app and activation never fight over the lock. GitHub runners start empty, so in CI the cache and log live for one run (the replay clock posts each day once). Persisting them needs a hosted store (MotherDuck free tier), later.
 - **Never double-post.** A day is posted once per profile and webhook unless `--force`.
