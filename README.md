@@ -94,6 +94,12 @@ A company record: tier and score at the top, the alert task in the timeline, the
 
 ![HubSpot company record with Signal Engine fields, task and contacts](docs/img/hubspot_record.png)
 
+**The loop, live.** A rep marks Johnson-Li as a customer in HubSpot. The next run reads that back before scoring, excludes the account so it can no longer alert, and writes the reason onto the record:
+
+| Rep sets Lifecycle Stage = Customer (tier still Hot) | After the next run: Excluded, reason `crm_customer` |
+|---|---|
+| ![Johnson-Li marked as customer, tier still Hot](docs/img/hubspot_loop_before.png) | ![Johnson-Li after the run: tier Excluded, reason crm_customer](docs/img/hubspot_loop_after.png) |
+
 **The app** (Streamlit) shows the same engine from the inside:
 
 | Account deep-dive: score history, the formula step by step, decay | Alert feed with reasons and accept / dismiss |
