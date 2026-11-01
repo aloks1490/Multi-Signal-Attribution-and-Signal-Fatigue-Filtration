@@ -86,9 +86,13 @@ A GitHub Actions workflow runs every weekday at 06:00 UTC: rebuild the world, re
 
 **HubSpot:** score, tier, reason and headline on each company record, the active buying group as contacts, and one task per alert, linked to the company. Before scoring, the run reads HubSpot back: if a rep marks a company as a customer, adds an open deal or ticks do-not-contact, it stops alerting. Synthetic domains are pushed as subdomains of the reserved `example.com`, so fake records never match real companies.
 
-| Companies ranked by Signal score in HubSpot | A company record: tier and score, the alert task, the buying group |
-|---|---|
-| ![HubSpot companies view sorted by Signal score](docs/img/hubspot_companies.png) | ![HubSpot company record with Signal Engine fields, task and contacts](docs/img/hubspot_record.png) |
+Companies ranked by Signal score:
+
+![HubSpot companies view sorted by Signal score](docs/img/hubspot_companies.png)
+
+A company record: tier and score at the top, the alert task in the timeline, the buying group on the right:
+
+![HubSpot company record with Signal Engine fields, task and contacts](docs/img/hubspot_record.png)
 
 **The app** (Streamlit) shows the same engine from the inside:
 
