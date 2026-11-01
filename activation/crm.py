@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -217,11 +218,16 @@ def push(db: str | Path, hs: HubSpot | None, as_of: date | None = None, dry_run:
     if pairs:
         hs.associate_default("contacts", "companies", pairs)
 
-    new_tasks = [t for t in p["tasks"] if not hs.find_by("tasks", "hs_task_subject", t["properties"]["hs_task_subject"], ["hs_task_subject"])]
+    existing = {t["properties"]["hs_task_subject"]: hs.find_by("tasks", "hs_task_subject", t["properties"]["hs_task_subject"], ["hs_task_subject"])
+                for t in p["tasks"]}
+    new_tasks = [t for t in p["tasks"] if not existing[t["properties"]["hs_task_subject"]]]
     task_ids = hs.batch_create("tasks", [t["properties"] for t in new_tasks]) if new_tasks else []
-    task_pairs = [(tid, company_ids[t["account_id"]]) for tid, t in zip(task_ids, new_tasks) if t["account_id"] in company_ids]
-    if task_pairs:
-        hs.associate_default("tasks", "companies", task_pairs)
+    ids_by_subject = {t["properties"]["hs_task_subject"]: tid for tid, t in zip(task_ids, new_tasks)}
+    ids_by_subject |= {subj: str(hits[0]["id"]) for subj, hits in existing.items() if hits}
+    # Link every task of the day, new or existing, so a link missed by an earlier run heals on the next one.
+    task_pairs = [(ids_by_subject[t["properties"]["hs_task_subject"]], company_ids[t["account_id"]])
+                  for t in p["tasks"] if t["account_id"] in company_ids]
+    hs.associate_typed("tasks", "companies", task_pairs)
 
     result = {**summary, "status": "synced", "properties_created": len(created_props), "tasks_created": len(task_ids),
               "tasks_skipped_existing": len(p["tasks"]) - len(new_tasks), "api_calls": hs.calls}
@@ -244,6 +250,28 @@ def inspect(hs: HubSpot) -> list[str]:
     return lines
 
 
+def repair_tasks(hs: HubSpot) -> list[str]:
+    """Link existing Signal Engine tasks to their company, matched by the company name in the task subject.
+    Touches only associations, never company fields."""
+    by_name: dict[str, str] = {}
+    for c in hs.list_all("companies", ["name", "signal_account_id"]):
+        if c["properties"].get("signal_account_id"):
+            by_name.setdefault(c["properties"].get("name"), str(c["id"]))
+    lines, pairs = [], []
+    for t in hs.list_all("tasks", ["hs_task_subject"]):
+        subject = t["properties"].get("hs_task_subject") or ""
+        m = re.match(r"Signal Engine: reach out to (.+) \(alert \d{4}-\d{2}-\d{2}\)$", subject)
+        if not m:
+            continue
+        company = by_name.get(m.group(1))
+        lines.append(f"  task {t['id']} → {m.group(1)}: {'company ' + company if company else 'NO MATCH'}")
+        if company:
+            pairs.append((str(t["id"]), company))
+    hs.associate_typed("tasks", "companies", pairs)
+    lines.insert(0, f"linked {len(pairs)} task(s) with association type {hs.association_type_id('tasks', 'companies') if pairs else '-'}")
+    return lines
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Sync with HubSpot.")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -255,12 +283,13 @@ def main() -> None:
     ps.add_argument("--dry-run", action="store_true")
     ps.add_argument("--out", default="out")
     sub.add_parser("inspect", help="read-only: list Signal Engine tasks and their linked companies")
+    sub.add_parser("repair-tasks", help="link existing Signal Engine tasks to their companies (associations only)")
     args = ap.parse_args()
     hs = client_from_env()
-    if args.cmd == "inspect":
+    if args.cmd in ("inspect", "repair-tasks"):
         if hs is None:
             raise SystemExit("HUBSPOT_TOKEN is not set")
-        print("\n".join(inspect(hs)))
+        print("\n".join((inspect if args.cmd == "inspect" else repair_tasks)(hs)))
         return
     result = pull(args.db, hs) if args.cmd == "pull" else push(args.db, hs, args.as_of, args.dry_run, Path(args.out))
     print(" · ".join(f"{k}={v}" for k, v in result.items()))

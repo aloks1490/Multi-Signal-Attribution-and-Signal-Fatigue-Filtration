@@ -1,8 +1,14 @@
 name: CRM inspect
 
-# Read-only: lists Signal Engine tasks in HubSpot and the companies each is linked to.
+# Lists Signal Engine tasks in HubSpot and the companies each is linked to (read-only).
+# With "repair" ticked, first links existing tasks to their companies (associations only, no field changes).
 on:
   workflow_dispatch:
+    inputs:
+      repair:
+        description: "Link existing Signal Engine tasks to their companies first"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,4 +25,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync
+      - name: Repair task links
+        if: ${{ inputs.repair }}
+        run: uv run python -m activation.crm repair-tasks
       - run: uv run python -m activation.crm inspect

@@ -78,12 +78,22 @@ class FakeHubSpot:
                 results.append({"id": oid})
             return Resp(201, {"status": "COMPLETE", "results": results})
         if m := re.fullmatch(r"/crm/v4/associations/(\w+)/(\w+)/batch/associate/default", path):
+            if m[1] == "tasks":  # live HubSpot answered OK without linking tasks through the default endpoint
+                return Resp(200, {"status": "COMPLETE", "results": []})
             if (m[1], m[2]) in self.reject_assoc:
                 return Resp(207, {"status": "COMPLETE", "results": [], "numErrors": 1,
                                   "errors": [{"message": f"cannot associate {m[1]} to {m[2]}"}]})
             for inp in json["inputs"]:
                 self.assoc.add((m[1], inp["from"]["id"], m[2], inp["to"]["id"]))
             return Resp(200, {"status": "COMPLETE", "results": []})
+        if m := re.fullmatch(r"/crm/v4/associations/(\w+)/(\w+)/labels", path):
+            return Resp(200, {"results": [{"category": "HUBSPOT_DEFINED", "typeId": 192, "label": None},
+                                          {"category": "USER_DEFINED", "typeId": 7, "label": "Champion"}]})
+        if m := re.fullmatch(r"/crm/v4/associations/(\w+)/(\w+)/batch/create", path):
+            for inp in json["inputs"]:
+                assert inp["types"][0]["associationCategory"] == "HUBSPOT_DEFINED" and inp["types"][0]["associationTypeId"] == 192
+                self.assoc.add((m[1], inp["from"]["id"], m[2], inp["to"]["id"]))
+            return Resp(201, {"status": "COMPLETE", "results": []})
         if m := re.fullmatch(r"/crm/v4/objects/(\w+)/(\w+)/associations/(\w+)", path):
             hits = [b for a, aid, c, b in self.assoc if a == m[1] and aid == m[2] and c == m[3]]
             return Resp(200, {"results": [{"toObjectId": int(h)} for h in hits]})
@@ -227,9 +237,22 @@ def test_rep_marks_customer_in_hubspot_and_alerts_stop(crm_env, tmp_path):
 
 def test_association_errors_are_raised_not_swallowed(crm_env):
     fake = FakeHubSpot()
-    fake.reject_assoc.add(("tasks", "companies"))
-    with pytest.raises(HubSpotError, match="associate tasks→companies"):
+    fake.reject_assoc.add(("contacts", "companies"))
+    with pytest.raises(HubSpotError, match="associate contacts→companies"):
         crm.push(crm_env["db"], client(fake), crm_env["day"], out_dir=crm_env["out"])
+
+
+def test_existing_unlinked_tasks_get_linked_on_next_push_and_by_repair(crm_env):
+    fake = FakeHubSpot()
+    crm.push(crm_env["db"], client(fake), crm_env["day"], out_dir=crm_env["out"])
+    fake.assoc = {a for a in fake.assoc if a[0] != "tasks"}  # simulate the earlier silent failure
+    crm.push(crm_env["db"], client(fake), crm_env["day"], out_dir=crm_env["out"])
+    assert len([a for a in fake.assoc if a[0] == "tasks"]) == len(fake.objects["tasks"])
+
+    fake.assoc = {a for a in fake.assoc if a[0] != "tasks"}
+    lines = crm.repair_tasks(client(fake))
+    assert lines[0].startswith(f"linked {len(fake.objects['tasks'])} task(s) with association type 192")
+    assert len([a for a in fake.assoc if a[0] == "tasks"]) == len(fake.objects["tasks"])
 
 
 def test_inspect_lists_tasks_and_their_companies(crm_env):

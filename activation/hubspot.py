@@ -105,6 +105,29 @@ class HubSpot:
             if data.get("numErrors") or data.get("errors"):
                 raise HubSpotError(f"associate {from_type}→{to_type}: {str(data.get('errors'))[:500]}")
 
+    def association_type_id(self, from_type: str, to_type: str) -> int:
+        """HubSpot's own (HUBSPOT_DEFINED) association type between two objects, read from the account, never hard-coded."""
+        labels = self.request("GET", f"/crm/v4/associations/{from_type}/{to_type}/labels").get("results", [])
+        defined = [l for l in labels if l.get("category") == "HUBSPOT_DEFINED"]
+        if not defined:
+            raise HubSpotError(f"no HUBSPOT_DEFINED association type for {from_type}→{to_type}: {labels}")
+        unlabeled = [l for l in defined if not l.get("label")]
+        return int((unlabeled or defined)[0]["typeId"])
+
+    def associate_typed(self, from_type: str, to_type: str, pairs: list[tuple[str, str]]) -> None:
+        """Link records with an explicit HubSpot-defined association type. Needed for tasks (activities): the default
+        endpoint answered without linking them. Re-linking an existing pair is harmless."""
+        if not pairs:
+            return
+        type_id = self.association_type_id(from_type, to_type)
+        for part in chunks(pairs):
+            body = {"inputs": [{"from": {"id": a}, "to": {"id": b},
+                                "types": [{"associationCategory": "HUBSPOT_DEFINED", "associationTypeId": type_id}]}
+                               for a, b in part]}
+            data = self.request("POST", f"/crm/v4/associations/{from_type}/{to_type}/batch/create", json=body)
+            if data.get("numErrors") or data.get("errors"):
+                raise HubSpotError(f"associate {from_type}→{to_type}: {str(data.get('errors'))[:500]}")
+
     def associated_ids(self, from_type: str, object_id: str, to_type: str) -> list[str]:
         data = self.request("GET", f"/crm/v4/objects/{from_type}/{object_id}/associations/{to_type}")
         return [str(r.get("toObjectId")) for r in data.get("results", [])]
