@@ -779,6 +779,13 @@ Run with `make app` (http://localhost:8501). The sidebar holds the data source (
 4. **Tuning sandbox:** edit weights, half-lives, multipliers, combo bonuses, the gate and the spike rule; rebuild silver and gold on a scratch copy of **dev** (~20–30 s); compare current vs edited at equal alert budgets; download edited CSVs. Real seeds are never written.
 5. **Settings:** the active profile with each profile's numbers; change needs a reason and a confirmation tick, rewrites `active_profile` in `scoring_params.csv`, rebuilds `engine_alerts` in every warehouse, and logs who / when / from → to / why. Rep feedback is listed here too.
 
+### 11.1a Hosted copy (Streamlit Community Cloud)
+
+- **Deploy:** repo `master`, entrypoint `app/streamlit_app/main.py`, Python 3.12, secret `SIGNAL_DEMO = "1"`. Community Cloud installs from `uv.lock`. No Slack, HubSpot or LLM secrets.
+- **Data:** the disk starts empty, so `app/bootstrap.py` generates and dbt-builds the holdout and dev worlds before the first page renders (1–3 min; ~45 s on an M4). It builds in `data/.building/` and moves each file into place when done, so a half-built warehouse is never visible; one build per process. The calibrated thresholds are committed in the seeds, so the numbers match `make m1`. No HubSpot pull: CRM exclusions are not applied on the hosted copy.
+- **Explanations:** the hosted copy has no daily-run state and no LLM key. `app/narratives_holdout.json` holds the model's explanation for every holdout alert (both profiles, 87), made once by the manual **Bundle explanations** workflow (`activation/bundle.py`: same prompt and fact checker as the daily run, one retry on an API error). The alert feed reads it for the holdout world when the copy has none of its own. First run (22 Nov 2026, nemotron-3.5-super): 84/87 written by the model, 3 rejected by the checker and kept as templates. Rerun the workflow and commit the file whenever seeds or the generator change, or the bundled dates will no longer match the alerts.
+- **Demo notes:** with `SIGNAL_DEMO=1` the sidebar and Settings say that changes stay in that copy and reset on restart; the scheduled run reads the setting committed in the repository.
+
 ### 11.2 Keeping Reflex cheap later
 
 - All data access lives in `app/queries.py`: plain functions that open DuckDB **read-only per call** (never a held connection, so dbt can write while the app runs) and return pandas DataFrames or dicts. Streamlit pages and the future Reflex `State` classes call the same functions; nothing in `queries.py` imports Streamlit.

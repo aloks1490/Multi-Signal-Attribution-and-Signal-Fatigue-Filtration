@@ -78,7 +78,7 @@ All weights, half-lives, multipliers and bonuses are CSV seeds in [`dbt_project/
 
 A GitHub Actions workflow runs every weekday at 06:00 UTC: rebuild the world, read exclusions back from HubSpot, score, explain, post, sync. Because the data is synthetic, each run replays one day of the quarter.
 
-**Explanations.** An open model on NVIDIA NIM's free tier (`nemotron-3.5-super`) gets a fact sheet per alert and writes the why-now. A checker rejects any output that mentions a person, number or name not in the facts and falls back to a template. On a 40-alert sample, 39 passed; every rejection was a wording false alarm, not an invented fact.
+**Explanations.** An open model on NVIDIA NIM's free tier (`nemotron-3.5-super`) gets a fact sheet per alert and writes the why-now. A checker rejects any output that mentions a person, number or name not in the facts and falls back to a template. On a 40-alert sample, 39 passed; every rejection was a wording false alarm, not an invented fact. The hosted app ships the model's explanation for every holdout alert, made once by a manual workflow, so it needs no key.
 
 **Slack:** one digest message a day: demo requests first, then each AE's new alerts with the model's headline, reasons, who to contact first and an angle. The digest as it was posted (28 Jul replay; companies and people are synthetic):
 

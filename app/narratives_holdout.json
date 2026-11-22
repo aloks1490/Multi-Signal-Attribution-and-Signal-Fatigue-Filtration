@@ -1,0 +1,2234 @@
+{
+ "generated_at": "2026-11-22T10:51:11+00:00",
+ "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+ "world": "holdout (seed 7)",
+ "counts": {
+  "llm": 84,
+  "template": 3
+ },
+ "narratives": [
+  {
+   "account_id": "acc_00826",
+   "alert_date": "2026-06-29",
+   "facts_hash": "ec497f128639bb72",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Moody and Sons shows bottom-of-funnel pricing interest alongside a new Head of Sales Development.",
+    "why_now": [
+     "Pricing page visit indicates active buying evaluation.",
+     "New Head of Sales Development trigger aligns with sales engagement priorities.",
+     "Multiple mid-funnel signals including case study and comparison page views."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p4",
+      "why": "Russell Mccarthy is the new Head of Sales Development and matches the recent leadership trigger."
+     },
+     {
+      "person_id": "p3",
+      "why": "Jacqueline Sanchez visited the pricing page, showing direct purchase intent."
+     }
+    ],
+    "angle": "Open with Russell Mccarthy by referencing his new role and how Seqly helps sales development leaders ramp teams and improve pipeline velocity."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01318",
+   "alert_date": "2026-06-30",
+   "facts_hash": "d0a2ac115e45a563",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Small PLC is running a team trial and hiring SDRs while actively using Seqly",
+    "why_now": [
+     "team_trial combo with trial_started and sequence_created signals",
+     "trigger_then_intent combo with three SDR job posts and BOFU activity",
+     "crm_connected and mailbox_connected signals show Pipedrive integration in progress"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Head of Sales Development who connected CRM, invited a teammate, created sequences, and started a trial"
+     },
+     {
+      "person_id": "p2",
+      "why": "BDR who created sequences and is active on the platform"
+     }
+    ],
+    "angle": "Ask David Dorsey how Seqly can support the new SDR hires and scale the team trial across Pipedrive"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00158",
+   "alert_date": "2026-07-02",
+   "facts_hash": "933679e2e3d6fbaa",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Miller PLC shows bottom-of-funnel pricing interest alongside trial and mailbox activity",
+    "why_now": [
+     "Pricing page visit indicates BOFU evaluation intent",
+     "Trial started and mailbox connected signal active product testing",
+     "Multiple sales development reps engaged with integration page and webinar"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Head of Sales Development connected a mailbox and started a trial, making them the decision-maker for outreach"
+     },
+     {
+      "person_id": "p2",
+      "why": "SDR visited the pricing page, showing direct buying interest"
+     }
+    ],
+    "angle": "Ask Jeremy Turner how Seqly can support his sales development team's trial and mailbox setup."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00826",
+   "alert_date": "2026-07-03",
+   "facts_hash": "44746af969487814",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Moody and Sons shows BOFU pricing interest plus a new Head of Sales Development, signaling an active sales evaluation.",
+    "why_now": [
+     "Pricing page visit indicates bottom-of-funnel evaluation intent.",
+     "New Head of Sales Development joined on 2026-05-23, creating a leadership change trigger.",
+     "Multiple comparison page visits show active vendor comparison."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p6",
+      "why": "Russell Mccarthy is the new Head of Sales Development and the trigger owner for the sales leadership change."
+     },
+     {
+      "person_id": "p1",
+      "why": "Charles Thomas is an SDR Manager who visited comparison and blog pages, showing direct buying interest."
+     }
+    ],
+    "angle": "Open with Russell Mccarthy by acknowledging his new role and asking how Moody and Sons is evaluating sales engagement tools to support the SDR team."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00158",
+   "alert_date": "2026-07-04",
+   "facts_hash": "01ac425aa0d68cb2",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Miller PLC shows strong bottom-of-funnel activity with pricing and security page views plus a trial start",
+    "why_now": [
+     "Pricing page and security page views indicate active evaluation",
+     "Teammate invited and mailbox connected signal a team trial is underway",
+     "Trial started and case study views show buying intent"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Jeremy Turner initiated the teammate invite, mailbox connection, and trial start, making him the decision driver"
+     },
+     {
+      "person_id": "p3",
+      "why": "Daniel Mcdaniel viewed pricing and security pages, showing direct product interest"
+     }
+    ],
+    "angle": "Ask Jeremy Turner how the team trial is going and whether Seqly can help his SDRs book more meetings from inbound interest."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00158",
+   "alert_date": "2026-07-05",
+   "facts_hash": "96c9ba92bbe54104",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Miller PLC shows BOFU buying intent with security and pricing page views plus an active team trial.",
+    "why_now": [
+     "Security page viewed twice and pricing page viewed once in the last 14 days.",
+     "Teammate invited, mailbox connected, sequence created, and trial started indicate active evaluation.",
+     "Combination of evaluation and team trial signals shows a coordinated buying motion."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Jeremy Turner leads sales development and has driven trial setup, mailbox connection, and sequence creation."
+     }
+    ],
+    "angle": "Ask Jeremy Turner how Seqly can support his team's active trial and sequence workflows."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01318",
+   "alert_date": "2026-07-07",
+   "facts_hash": "dfbee95bfd40c8f0",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Small PLC is evaluating Seqly with multiple BOFU signals and recent SDR hiring",
+    "why_now": [
+     "CRM connected, pricing page viewed, security page viewed, and teammate invited in the last 14 days",
+     "Three SDR job postings in the last 90 days indicate sales team expansion",
+     "Trial started and sequence created show active product usage"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "David Dorsey is Head of Sales Development and has performed the widest range of high-intent actions including CRM connection, teammate invitation, and trial start"
+     }
+    ],
+    "angle": "Open by asking how David is managing SDR onboarding and whether Seqly can support the new hires he is bringing on."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00160",
+   "alert_date": "2026-07-08",
+   "facts_hash": "c4b55af2e1283285",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Price, Nguyen and Rollins shows BOFU pricing interest with two visitors and 5 active people in the last 14 days",
+    "why_now": [
+     "Two people visited the pricing page in the last 14 days",
+     "Five people were active on Seqly in the last 14 days",
+     "Activity is 1.4 times the usual level"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Visited the pricing page and downloaded content in the last 14 days"
+     },
+     {
+      "person_id": "p2",
+      "why": "Visited the pricing page in the last 14 days"
+     }
+    ],
+    "angle": "Ask the Marketing Specialist how they are using content downloads to move prospects toward pricing conversations."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00359",
+   "alert_date": "2026-07-08",
+   "facts_hash": "47db52c3adbbab61",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Vargas PLC dropped Salesloft and is viewing pricing and security pages, indicating active evaluation of a replacement.",
+    "why_now": [
+     "Competitor tool dropped trigger: Salesloft on 2026-05-26",
+     "Pricing page and security page views signal BOFU evaluation intent",
+     "Combination of evaluation and trigger_then_intent combos shows active buying cycle"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Justin Espinoza is a Sales Manager who visited the security page, showing direct interest in platform security and reliability."
+     },
+     {
+      "person_id": "p3",
+      "why": "Rebecca Hernandez is a Sales Manager who viewed the pricing page, indicating she is evaluating costs and purchase readiness."
+     }
+    ],
+    "angle": "Open by acknowledging their recent move away from Salesloft and ask how their current sales engagement workflow is handling security and pricing requirements."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01357",
+   "alert_date": "2026-07-08",
+   "facts_hash": "cf9e42123fba45ca",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Wilson Ltd shows BOFU pricing interest and hired a new Head of RevOps",
+    "why_now": [
+     "Pricing page viewed twice in the last 14 days",
+     "New Head of RevOps joined on 2026-07-07",
+     "Integration page viewed three times in the last 14 days"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "RevOps Analyst viewed the integration page and the company just hired a Head of RevOps"
+     },
+     {
+      "person_id": "p7",
+      "why": "Sales Manager at a company with a new sales leader and active pricing interest"
+     }
+    ],
+    "angle": "Ask Rhonda how Seqly can support integration planning under the new Head of RevOps."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00158",
+   "alert_date": "2026-07-09",
+   "facts_hash": "92b176a93db1fe76",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Miller PLC shows BOFU buying intent with pricing and security page views plus a teammate invite.",
+    "why_now": [
+     "Pricing page viewed 3 times and security page viewed 3 times in the last 14 days.",
+     "One teammate invited and a trial started within the last 14 days.",
+     "Activity is 17 times higher than usual across evaluation and team trial signals."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Jeremy Turner is Head of Sales Development and has visited pricing and security pages, invited a teammate, connected a mailbox, created sequences, and started a trial."
+     }
+    ],
+    "angle": "Ask Jeremy how Seqly can support his sales development team's trial and evaluation process."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01069",
+   "alert_date": "2026-07-09",
+   "facts_hash": "35a24c134a723ecc",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hernandez, Frazier and Richardson shows strong bottom-of-funnel interest with three pricing page views and high recent activity.",
+    "why_now": [
+     "Three pricing page views in the last 14 days signal active buying intent.",
+     "Overall site activity is 1.4 times the usual level.",
+     "Five people have been active on the site in the last 14 days."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Alison Mccarty is a BDR who viewed the pricing page most recently."
+     },
+     {
+      "person_id": "p2",
+      "why": "Brenda Holmes is a Sales Ops Specialist who clicked an email and visited the blog."
+     }
+    ],
+    "angle": "Ask Alison Mccarty how her team is currently managing sales outreach and whether they are evaluating new engagement tools."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00158",
+   "alert_date": "2026-07-10",
+   "facts_hash": "3559273647a0e034",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Miller PLC shows strong bottom-of-funnel activity with pricing and security page visits plus a trial start",
+    "why_now": [
+     "Pricing page visited 3 times and security page visited 3 times in the last 14 days",
+     "CRM connected and teammate invited signal an active evaluation",
+     "Trial started and sequence created indicate hands-on product testing"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Jeremy Turner is Head of Sales Development and has connected the CRM, visited pricing and security pages, invited a teammate, and started a trial"
+     },
+     {
+      "person_id": "p3",
+      "why": "Daniel Mcdaniel is an SDR who has visited pricing and security pages, created sequences, and viewed comparison and case study pages"
+     }
+    ],
+    "angle": "Ask Jeremy Turner how Seqly can support his sales development team's trial and CRM-connected workflow"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00438",
+   "alert_date": "2026-07-10",
+   "facts_hash": "64eac64533860b76",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Watkins-Bernard is evaluating sales-engagement tools after posting two BDR roles in June",
+    "why_now": [
+     "Two BDR job postings in the last 90 days signal team expansion",
+     "Pricing page visits show bottom-of-funnel evaluation intent",
+     "Comparison and integration page visits indicate active vendor assessment"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "SDR Lawrence Richardson visited pricing, comparison, and integration pages most recently"
+     },
+     {
+      "person_id": "p2",
+      "why": "VP Revenue Operations David Sanchez reviewed comparison and integration pages"
+     }
+    ],
+    "angle": "Ask Lawrence how Seqly can help the new BDR hires ramp faster and book more meetings."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00560",
+   "alert_date": "2026-07-11",
+   "facts_hash": "954c0f707e47d689",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Kane and Sons is evaluating pricing and comparison pages, showing active buying intent.",
+    "why_now": [
+     "11 pricing page views in the last 14 days indicate BOFU interest.",
+     "6 comparison page views show active vendor evaluation.",
+     "Two people have visited the site recently, including pricing and comparison pages."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Head of Sales Ops visited the pricing page and manages sales operations."
+     },
+     {
+      "person_id": "p1",
+      "why": "Software Engineer visited pricing, comparison, and blog pages."
+     }
+    ],
+    "angle": "Ask the Head of Sales Ops how Seqly can support their sales engagement workflow given their recent pricing page review."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01069",
+   "alert_date": "2026-07-11",
+   "facts_hash": "98d522cd3dfb79eb",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hernandez, Frazier and Richardson shows strong bottom-of-funnel interest with six pricing page views and high overall activity.",
+    "why_now": [
+     "Six pricing page views in the last 14 days indicate active evaluation.",
+     "Overall site activity is 2.7 times the usual level.",
+     "Two BDRs visited pricing and comparison pages, signaling sales team interest."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Alison Mccarty is a BDR who viewed pricing and comparison pages, showing direct buying intent."
+     },
+     {
+      "person_id": "p4",
+      "why": "Brenda Holmes is a Sales Ops Specialist who clicked an email, indicating engagement with outreach."
+     }
+    ],
+    "angle": "Ask Alison Mccarty how her team is currently managing sales engagement and whether they are comparing platforms to improve pipeline efficiency."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01069",
+   "alert_date": "2026-07-12",
+   "facts_hash": "da7592cddfe49c69",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hernandez, Frazier and Richardson shows strong buying intent with 7 pricing page views and 2.9x normal activity",
+    "why_now": [
+     "7 pricing page views in the last 14 days indicate BOFU interest",
+     "Overall site activity is 2.9 times higher than usual",
+     "4 people have been active on the site in the last 14 days"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Alison Mccarty is a BDR who viewed both the pricing and comparison pages recently"
+     }
+    ],
+    "angle": "Open by asking Alison Mccarty how her team currently manages sales engagement and whether they are evaluating new tools to support outbound activity."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00971",
+   "alert_date": "2026-07-15",
+   "facts_hash": "6a062ec3c448ceac",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Morris, Johnson and Morris shows bottom-funnel pricing interest after hiring a new VP Sales.",
+    "why_now": [
+     "VP Sales joined on 2026-06-14",
+     "Pricing page viewed 3 times in the last 14 days",
+     "Trigger then intent combo detected"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "VP Revenue Operations engaged with case studies and emails and recently joined a company with new sales leadership."
+     },
+     {
+      "person_id": "p3",
+      "why": "Demand Gen Manager visited the pricing page, indicating active buying interest."
+     }
+    ],
+    "angle": "Ask Joseph Tucker how Seqly can help the revenue operations team support the new VP Sales in scaling outreach."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01307",
+   "alert_date": "2026-07-16",
+   "facts_hash": "44d6af51247a15eb",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox Group raised Series B $40M and shows BOFU pricing interest across multiple contacts.",
+    "why_now": [
+     "Series B $40M funding on 2026-06-16",
+     "Four pricing page views in 14 days indicate evaluation intent",
+     "Multiple contacts visited pricing, comparison, and integration pages"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p4",
+      "why": "Head of Sales Ops viewed pricing and comparison pages, signaling buying-committee interest"
+     },
+     {
+      "person_id": "p1",
+      "why": "BDR viewed pricing, case study, comparison, and integration pages, showing broad evaluation activity"
+     }
+    ],
+    "angle": "Open by asking how Sarah Flores is planning to support the sales team after the Series B and whether Seqly can fit into their current Salesforce setup."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01136",
+   "alert_date": "2026-07-17",
+   "facts_hash": "eb23834ae7d39eb8",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Mclean, Ferrell and Ayers shows evaluation intent with pricing and comparison page visits from sales and marketing leaders",
+    "why_now": [
+     "CMO Adam Morrow visited the pricing page, a BOFU signal",
+     "SDR Manager Chelsea King viewed comparison and integration pages, indicating active evaluation",
+     "Company is in the evaluation combo with multiple BOFU and MOFU signals in the last 14 days"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Chelsea King is an SDR Manager who visited comparison and integration pages, showing direct buying interest"
+     },
+     {
+      "person_id": "p5",
+      "why": "Adam Morrow is the CMO and visited the pricing page, signaling executive-level evaluation"
+     }
+    ],
+    "angle": "Open by asking Chelsea King how her SDR team is evaluating sales-engagement tools and whether Seqly can fit into their current stack"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00826",
+   "alert_date": "2026-07-18",
+   "facts_hash": "41a517c3ec699de0",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Moody and Sons shows strong bottom-of-funnel interest with 4 pricing page views and a new Head of Sales Development.",
+    "why_now": [
+     "4 pricing page views in 14 days signal active evaluation",
+     "New Head of Sales Development joined on 2026-05-23",
+     "6 people active in the last 14 days with activity 1.9x usual"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Russell Mccarthy is the new Head of Sales Development and visited the blog"
+     },
+     {
+      "person_id": "p3",
+      "why": "William Hill viewed pricing, security, and integration pages"
+     }
+    ],
+    "angle": "Ask Russell how the new sales leadership is evaluating outreach tools for the SDR team."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00830",
+   "alert_date": "2026-07-18",
+   "facts_hash": "c546b31eb319c6a2",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Potts-Colean SDR team is trialing Seqly with high activity and multiple job postings",
+    "why_now": [
+     "Three people active in the last 14 days with activity 9x usual",
+     "Teammate invited and trial started signal a team trial",
+     "Three SDR job postings in the last 90 days indicate hiring expansion"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Rachel Sanders started the trial, connected a mailbox, and created a sequence"
+     },
+     {
+      "person_id": "p2",
+      "why": "Karina Miller leads sales development and viewed case studies and clicked emails"
+     }
+    ],
+    "angle": "Ask Rachel Sanders how the trial is going for her SDR team and whether Seqly can support their new hires"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01069",
+   "alert_date": "2026-07-18",
+   "facts_hash": "828196b6ad0390ff",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hernandez, Frazier and Richardson shows strong buying intent with 13 pricing page views and an evaluation combo",
+    "why_now": [
+     "13 pricing page views in 14 days indicate active evaluation",
+     "Evaluation combo signals a formal buying process",
+     "Activity is 2.1 times the usual level"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "BDR Alison Mccarty viewed pricing and comparison pages most recently"
+     },
+     {
+      "person_id": "p5",
+      "why": "Sales Ops Specialist Brenda Holmes clicked a sales email"
+     }
+    ],
+    "angle": "Ask Alison Mccarty how Seqly can support her outbound prospecting workflows as a BDR."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01307",
+   "alert_date": "2026-07-18",
+   "facts_hash": "c491284d21463b35",
+   "source": "template",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox Group: 79 · fit C · pricing_page, security_page",
+    "why_now": [
+     "5 people active in the last 14 days",
+     "Highest-intent activity: pricing_page, security_page, integration_page",
+     "funding_round: Series B $40M (2026-06-16)"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "most senior active person; recently on pricing_page, comparison_page"
+     }
+    ],
+    "angle": "Open with cost: what a ramped SDR team costs today and what Seqly changes."
+   },
+   "problems": [
+    "name or term not in facts: B."
+   ]
+  },
+  {
+   "account_id": "acc_01307",
+   "alert_date": "2026-07-19",
+   "facts_hash": "91c287f4b6e78bd1",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox Group shows BOFU buying intent after a $40M Series B funding round.",
+    "why_now": [
+     "Pricing page viewed 8 times in 14 days, indicating active evaluation.",
+     "Security page viewed 2 times in 14 days, showing procurement-stage interest.",
+     "Series B $40M funding on 2026-06-16 provides budget for new sales-engagement tools."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Head of Sales Ops viewed pricing, comparison, and integration pages, signaling ownership of the buying decision."
+     }
+    ],
+    "angle": "Ask Sarah Flores how Cox Group plans to scale sales engagement following its Series B funding."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00826",
+   "alert_date": "2026-07-20",
+   "facts_hash": "a665121d2d90a413",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Moody and Sons shows strong bottom-of-funnel intent with 4 pricing page views and a new Head of Sales Development",
+    "why_now": [
+     "4 pricing page views and 1 security page view indicate active evaluation",
+     "New Head of Sales Development joined on 2026-05-23",
+     "6 active people and 2x normal activity signal increased buying interest"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Russell Mccarthy is the new Head of Sales Development and visited the blog"
+     },
+     {
+      "person_id": "p1",
+      "why": "Charles Thomas is an SDR Manager who viewed pricing and comparison pages"
+     }
+    ],
+    "angle": "Ask Russell Mccarthy how Seqly can support his sales development team as he ramps into the new role"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01621",
+   "alert_date": "2026-07-20",
+   "facts_hash": "aceee98dc38046eb",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Williams, Raymond and Ramos shows BOFU pricing interest after a $90M Series C",
+    "why_now": [
+     "CRO Alexis Hill visited the pricing page, a BOFU signal",
+     "Series C funding of $90M on 2026-05-19 indicates growth capacity",
+     "Multiple account executives viewed case studies, showing team-wide evaluation interest"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "CRO Alexis Hill visited pricing and comparison pages, indicating active evaluation"
+     }
+    ],
+    "angle": "Open with Alexis Hill by connecting the Series C funding to scaling sales engagement for the account executive team."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00830",
+   "alert_date": "2026-07-21",
+   "facts_hash": "767222f4d89b9ef0",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Potts-Coleman is evaluating Seqly with active trial and BOFU signals across its SDR team",
+    "why_now": [
+     "Trial started plus pricing page view and teammate invited indicate active evaluation",
+     "Three SDR job postings in 90 days show team expansion and hiring momentum",
+     "Six people active in 14 days with strong MOFU and BOFU engagement across case studies, sequences, and mailbox setup"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Rachel Sanders is an SDR Manager who started a trial, connected a mailbox, created sequences, and invited a teammate, showing hands-on buying intent"
+     },
+     {
+      "person_id": "p1",
+      "why": "Karina Miller is Head of Sales Development and has viewed case studies, clicked emails, created sequences, and visited the blog, indicating leadership-level interest"
+     }
+    ],
+    "angle": "Open by asking Rachel Sanders how Seqly can support her new SDR hires and streamline sequence creation and mailbox setup for her team"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01069",
+   "alert_date": "2026-07-21",
+   "facts_hash": "dac873d22c63f612",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hernandez, Frazier and Richardson shows evaluation intent with 17 pricing page visits and high site activity.",
+    "why_now": [
+     "17 pricing page visits signal bottom-of-funnel evaluation.",
+     "Site activity is 2.5x usual levels.",
+     "Evaluation combo detected across multiple pages."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p4",
+      "why": "Alison Mccarty visited pricing and comparison pages, indicating active evaluation."
+     },
+     {
+      "person_id": "p2",
+      "why": "Keith Arnold visited integration and blog pages, showing technical interest."
+     }
+    ],
+    "angle": "Ask Alison Mccarty how Seqly can support her evaluation of sales-engagement tools given her recent pricing and comparison page visits."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01471",
+   "alert_date": "2026-07-23",
+   "facts_hash": "58a4f776d6dcb2af",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Graham PLC shows bottom-of-funnel pricing interest alongside repeated SDR hiring signals.",
+    "why_now": [
+     "Pricing page visit indicates BOFU buying intent.",
+     "Three SDR job postings in 90 days signal sales team expansion.",
+     "Trigger-then-intent combo aligns hiring activity with platform engagement."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p4",
+      "why": "VP Revenue Operations visited the blog and owns revenue process decisions."
+     },
+     {
+      "person_id": "p6",
+      "why": "SDR Manager downloaded content and is hiring SDRs."
+     }
+    ],
+    "angle": "Open with how Seqly helps revenue operations scale SDR onboarding and pipeline coverage during hiring."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01737",
+   "alert_date": "2026-07-25",
+   "facts_hash": "d1e883a7d24b7d8f",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox, Avery and Walters is a 24-person HR Tech firm with strong pricing-page interest and a new sales leader.",
+    "why_now": [
+     "Five pricing page views in 14 days show active buying intent.",
+     "A new Head of Sales Development started May 13, 2026, creating a leadership change window.",
+     "Two people were active on site in the last 14 days, indicating current engagement."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "John House is an SDR who viewed the pricing page five times and was last seen July 24, 2026."
+     },
+     {
+      "person_id": "p2",
+      "why": "Jack Carson is a Sales Ops Specialist who clicked an email and was last seen July 24, 2026."
+     }
+    ],
+    "angle": "Ask John House how Seqly can help his SDR team convert pricing-page interest into more qualified pipeline."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00056",
+   "alert_date": "2026-07-26",
+   "facts_hash": "24201522cbc99971",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Baker, Poole and Martin is evaluating sales-engagement tools with repeated pricing and security page views",
+    "why_now": [
+     "Pricing and security page views indicate bottom-of-funnel evaluation activity",
+     "Two SDR job postings in the last 90 days suggest team expansion and new outreach needs",
+     "Comparison page visits show active vendor comparison"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Andrew Romero is the SDR Manager and has visited the comparison page, making him the relevant buyer for team expansion"
+     },
+     {
+      "person_id": "p2",
+      "why": "Catherine Austin is an SDR who viewed pricing and security pages, showing direct product interest"
+     }
+    ],
+    "angle": "Ask Andrew Romero how Seqly can support the new SDR hires and streamline their outreach workflow"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01737",
+   "alert_date": "2026-07-27",
+   "facts_hash": "18f322cf0d28a8ab",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox, Avery and Walters is actively evaluating pricing and comparison pages with a new Head of Sales Development in place.",
+    "why_now": [
+     "7 pricing page views and 3 comparison page views in the last 14 days",
+     "New Head of Sales Development hired on 2026-05-13",
+     "2 active people on site in the last 14 days"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "John House is an SDR who viewed pricing and comparison pages most recently on 2026-07-26"
+     },
+     {
+      "person_id": "p2",
+      "why": "Jack Carson is a Sales Ops Specialist who clicked an email on 2026-07-24"
+     }
+    ],
+    "angle": "Ask John House how Seqly can help the new Head of Sales Development improve SDR outreach and pipeline conversion."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00141",
+   "alert_date": "2026-07-28",
+   "facts_hash": "bf3abce65793fabf",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Collier Ltd is hiring SDRs and showing strong buying signals including trial start and pricing page views.",
+    "why_now": [
+     "Two SDR job postings on 2026-06-09 indicate team expansion.",
+     "Trial started and pricing page visited show active evaluation.",
+     "Mailbox connected and sequence created show platform setup activity."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Brandon Fuentes connected a mailbox, created a sequence, and started a trial, making him the primary product user."
+     },
+     {
+      "person_id": "p4",
+      "why": "Jeffrey Simmons viewed the pricing page, indicating buying intent."
+     }
+    ],
+    "angle": "Ask Brandon Fuentes how Seqly can support the new SDR hires and streamline the sequences he is already building."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00252",
+   "alert_date": "2026-07-28",
+   "facts_hash": "06d750cfad1ccded",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hodges-Phillips shows evaluation-level buying intent with trial started and pricing page views.",
+    "why_now": [
+     "Trial started and pricing page visited indicate active evaluation.",
+     "Multiple high-intent signals including case study view and mailbox connected.",
+     "Activity is 2.2 times usual with three active people in the last 14 days."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Oscar Lawson visited pricing, viewed case studies, connected a mailbox, and started a trial, showing strong hands-on evaluation interest."
+     },
+     {
+      "person_id": "p2",
+      "why": "Justin Foster is VP Revenue and viewed the integration page, making him a relevant executive stakeholder."
+     }
+    ],
+    "angle": "Ask Oscar Lawson about his trial experience and how Seqly can support the team's outreach workflow."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01737",
+   "alert_date": "2026-07-28",
+   "facts_hash": "9ee7aa68d53344ae",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox, Avery and Walters is actively evaluating Seqly with repeated pricing and comparison page visits and a new Head of Sales Development.",
+    "why_now": [
+     "Pricing page visited 8 times in the last 14 days",
+     "Comparison page visited 4 times in the last 14 days",
+     "New Head of Sales Development joined on 2026-05-13"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "John House is an SDR who visited both the pricing and comparison pages most recently on 2026-07-27"
+     }
+    ],
+    "angle": "Ask John House how Seqly can support his outbound workflow now that a new Head of Sales Development is in place."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00056",
+   "alert_date": "2026-07-30",
+   "facts_hash": "db545b5f570e84fd",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Baker, Poole and Martin is evaluating sales-engagement tools with repeated pricing and comparison page visits.",
+    "why_now": [
+     "Pricing page visited 3 times in the last 14 days",
+     "Comparison page visited 4 times in the last 14 days",
+     "Two SDR job postings in the last 90 days indicate team expansion"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Andrew Romero is an SDR Manager who visited pricing, comparison, and integration pages, signaling buying influence."
+     }
+    ],
+    "angle": "Ask Andrew Romero how Seqly can support his expanding SDR team's outreach and pipeline generation."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00141",
+   "alert_date": "2026-07-31",
+   "facts_hash": "47b7756727731555",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Collier Ltd is evaluating sales-engagement tools with two SDR hires posted and active trial usage.",
+    "why_now": [
+     "Pricing page viewed twice and trial started indicate active evaluation.",
+     "Two SDR job postings on 2026-06-09 signal team expansion and sequencing need.",
+     "High-intent combo of evaluation plus trigger then intent with 8x usual activity."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "RevOps Manager connected a mailbox, created a sequence, and started a trial, making them the technical buyer."
+     },
+     {
+      "person_id": "p1",
+      "why": "BDR viewed pricing, case studies, and comparison pages, showing direct end-user interest."
+     }
+    ],
+    "angle": "Ask Brandon Fuentes how Seqly can support the new SDR team leads and streamline the sequences he is already building."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00830",
+   "alert_date": "2026-07-31",
+   "facts_hash": "c2e146dd42183508",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Potts-Coleman is evaluating Seqly with heavy BOFU activity and multiple SDR hires underway.",
+    "why_now": [
+     "Pricing page visited 6 times and security page visited 2 times in the last 14 days.",
+     "Teammate invited signal indicates internal buying committee expansion.",
+     "Three SDR job postings in the last 90 days signal sales team expansion."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Rachel Sanders is an SDR Manager who visited pricing, comparison, and integration pages and invited a teammate."
+     },
+     {
+      "person_id": "p2",
+      "why": "Timothy Griffin is an SDR Manager who visited pricing, case study, and integration pages."
+     }
+    ],
+    "angle": "Ask Rachel Sanders how Seqly can support her incoming SDR hires and current team workflow."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00960",
+   "alert_date": "2026-07-31",
+   "facts_hash": "162fc93a12dcb841",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Patterson, Oneill and Jones shows evaluation intent with pricing page visit and high activity",
+    "why_now": [
+     "Pricing page visit indicates bottom-of-funnel evaluation",
+     "Activity is 2.2 times usual levels",
+     "Five people were active in the last 14 days"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p4",
+      "why": "John Rivera visited the pricing page, showing direct buying interest"
+     },
+     {
+      "person_id": "p1",
+      "why": "Justin Morrison reviewed the integration page, relevant to technical fit"
+     }
+    ],
+    "angle": "Ask John Rivera about his evaluation timeline and how Seqly can support HubSpot-based sales engagement for a 342-person APAC fintech team."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01737",
+   "alert_date": "2026-07-31",
+   "facts_hash": "cd0e37692bc7352d",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox, Avery and Walters shows strong bottom-of-funnel interest with 12 pricing page views and a new sales leader",
+    "why_now": [
+     "12 pricing page views in the last 14 days",
+     "7 comparison page views in the last 14 days",
+     "New Head of Sales Development joined on 2026-05-13"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "John House viewed pricing and comparison pages and was last seen on 2026-07-30"
+     }
+    ],
+    "angle": "Ask John House how Seqly can support his SDR workflow now that a new Head of Sales Development is in place."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00056",
+   "alert_date": "2026-08-01",
+   "facts_hash": "731ec036d1de2d11",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Baker, Poole and Martin is evaluating sales-engagement tools with repeated pricing-page visits from two SDR team members.",
+    "why_now": [
+     "Two SDR team members visited pricing, security, comparison, and integration pages in the last 14 days.",
+     "Company posted two SDR job openings in May, indicating team expansion.",
+     "Evaluation combo signal with BOFU pricing activity suggests active buying cycle."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Catherine Austin is an SDR who visited pricing, security, and comparison pages most recently on July 31."
+     },
+     {
+      "person_id": "p2",
+      "why": "Andrew Romero is SDR Manager who visited pricing, comparison, and integration pages on July 30."
+     }
+    ],
+    "angle": "Open by asking Catherine how her team is currently managing SDR outreach and whether they are looking to scale as they hire new reps."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01357",
+   "alert_date": "2026-08-01",
+   "facts_hash": "c3a3c95eab004b44",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Wilson Ltd shows bottom-of-funnel pricing interest after hiring a new Head of RevOps",
+    "why_now": [
+     "Pricing page viewed 4 times in 14 days",
+     "New Head of RevOps joined 2026-07-07",
+     "Trigger then intent combo detected"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "CRO downloaded content and visited the blog, showing buying intent"
+     },
+     {
+      "person_id": "p5",
+      "why": "Sales Manager viewed pricing page, indicating sales-team evaluation"
+     }
+    ],
+    "angle": "Ask the CRO how the new Head of RevOps is changing sales engagement and whether Wilson Ltd is evaluating tools to support that transition."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01621",
+   "alert_date": "2026-08-01",
+   "facts_hash": "d188029a289deffc",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Williams, Raymond and Ramos is evaluating sales-engagement tools after a Series C funding round",
+    "why_now": [
+     "Series C $90M funding round on 2026-05-19",
+     "Evaluation combo with BOFU pricing and security page views",
+     "4 active people in the last 14 days"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "CRO Alexis Hill viewed pricing, security, and integration pages and was last seen on 2026-07-29"
+     }
+    ],
+    "angle": "Ask Alexis Hill how the Series C funding is changing sales-engagement priorities for the revenue team."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01737",
+   "alert_date": "2026-08-01",
+   "facts_hash": "5926f7fd70b2656c",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Cox, Avery and Walters shows strong bottom-of-funnel interest with 14 pricing page views and a new Head of Sales Development",
+    "why_now": [
+     "14 pricing page views in the last 14 days indicate active buying intent",
+     "8 comparison page views show they are evaluating vendors",
+     "New Head of Sales Development joined on 2026-05-13, creating a leadership change window"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "John House is an SDR who viewed both pricing and comparison pages recently"
+     }
+    ],
+    "angle": "Open by asking how the new Head of Sales Development is approaching prospecting and whether Seqly can help the SDR team book more meetings."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01123",
+   "alert_date": "2026-08-02",
+   "facts_hash": "2a269f6692be2343",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Harris Inc shows evaluation-stage buying intent with pricing page visits and high recent activity.",
+    "why_now": [
+     "Pricing page visit indicates BOFU evaluation interest.",
+     "Activity is 2.3 times usual levels over the past 14 days.",
+     "Nine people were active in the past 14 days across multiple signals."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Robert Walls viewed a case study and attended a webinar, showing strong engagement with Seqly content."
+     }
+    ],
+    "angle": "Ask Robert Walls which use cases from the case study and webinar are most relevant to Harris Inc's marketing goals."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01621",
+   "alert_date": "2026-08-02",
+   "facts_hash": "ab88456427ce45b6",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Williams, Raymond and Ramos shows BOFU buying intent after a $90M Series C",
+    "why_now": [
+     "Pricing page viewed 3 times and security page viewed 2 times in the last 14 days",
+     "Series C funding round of $90M closed on 2026-05-19",
+     "Evaluation combo detected with 4 active people in the last 14 days"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p4",
+      "why": "CRO Alexis Hill viewed pricing, security, and integration pages, indicating executive-level evaluation"
+     },
+     {
+      "person_id": "p1",
+      "why": "Account Executive Bridget Conrad viewed pricing, case studies, comparison pages, and clicked emails, showing hands-on buying interest"
+     }
+    ],
+    "angle": "Open with Alexis Hill by connecting the new Series C capital to scaling sales engagement and securing the revenue stack."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00141",
+   "alert_date": "2026-08-03",
+   "facts_hash": "3db81ef01118da51",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Collier Ltd is evaluating Seqly with active trial usage and multiple pricing page visits.",
+    "why_now": [
+     "Pricing page visited 5 times in 14 days, indicating BOFU evaluation.",
+     "Trial started and teammate invited, showing active team trial.",
+     "SDR job posts signal sales team expansion and potential sequencing need."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Brandon Fuentes is a RevOps Manager who started the trial, connected a mailbox, created a sequence, and visited pricing and comparison pages."
+     },
+     {
+      "person_id": "p4",
+      "why": "Miranda Miller is Head of Sales Development and visited the integration page, relevant to SDR hiring triggers."
+     }
+    ],
+    "angle": "Open with Brandon by asking how the trial and sequence setup are going, then connect Miranda to SDR team scaling and integration needs."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00359",
+   "alert_date": "2026-08-05",
+   "facts_hash": "6b422241e7e42fc9",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Vargas PLC shows BOFU security interest and recently dropped Salesloft",
+    "why_now": [
+     "Two security page views indicate BOFU buying intent",
+     "Salesloft was dropped as a competitor tool on 2026-05-26",
+     "Case study and content downloads show active evaluation"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Kelly Barber viewed the security page twice, showing direct BOFU interest"
+     },
+     {
+      "person_id": "p8",
+      "why": "Christopher Norris is the CMO and attended a webinar plus visited the blog"
+     }
+    ],
+    "angle": "Ask Kelly Barber about their security requirements now that Salesloft is no longer in the stack."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00807",
+   "alert_date": "2026-08-05",
+   "facts_hash": "c47c66deaecb7359",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hoffman LLC shows evaluation-stage buying interest with 7 active people and 2.1x normal activity",
+    "why_now": [
+     "7 people active in the last 14 days with activity 2.1x usual",
+     "Evaluation combo detected alongside security page and comparison page views",
+     "Multiple MOFU signals including case study view, content download, and integration page visits"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "VP Engineering who downloaded content and visited the integration page"
+     },
+     {
+      "person_id": "p1",
+      "why": "VP Engineering who clicked an ad and was active most recently"
+     }
+    ],
+    "angle": "Ask Haley Morales how Seqly can support her engineering team's integration and outreach needs based on her recent content download and integration page visit."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00059",
+   "alert_date": "2026-08-06",
+   "facts_hash": "e84ba7d83b0b7f8e",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Chang LLC shows BOFU buying signals with pricing page visit, teammate invite, and active trial",
+    "why_now": [
+     "Pricing page visit and teammate invite indicate evaluation intent",
+     "Trial started and sequence created show active product testing",
+     "Multiple integration page views suggest technical fit assessment"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Head of Sales Ops invited a teammate, connected a mailbox, created a sequence, and started a trial"
+     }
+    ],
+    "angle": "Ask Anthony Bowman how the trial is going and whether Seqly can support the team's sales engagement workflow."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01621",
+   "alert_date": "2026-08-06",
+   "facts_hash": "9df955af0d994ba3",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Williams, Raymond and Ramos shows strong BOFU intent after a $90M Series C",
+    "why_now": [
+     "security_page and pricing_page views indicate active evaluation",
+     "funding_round Series C $90M on 2026-05-19 signals budget for new tools",
+     "comparison_page and integration_page views show vendor research"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "CRO Alexis Hill viewed security and integration pages, matching buying signals"
+     }
+    ],
+    "angle": "Open by asking how the CRO plans to scale security operations with the new Series C capital."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01069",
+   "alert_date": "2026-08-07",
+   "facts_hash": "048beb9520cb4c10",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hernandez, Frazier and Richardson shows evaluation-stage buying intent with pricing page and integration page visits.",
+    "why_now": [
+     "Pricing page visit indicates BOFU evaluation interest.",
+     "Integration page visit suggests technical fit assessment.",
+     "Multiple email clicks show active engagement across the account."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Alison Mccarty visited the pricing page, showing direct buying interest."
+     },
+     {
+      "person_id": "p1",
+      "why": "Daniel Luna clicked emails and visited the integration page, indicating engagement with product fit."
+     }
+    ],
+    "angle": "Open by asking Alison Mccarty what use case she is evaluating on the pricing page and how Seqly can support her outreach workflow."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01621",
+   "alert_date": "2026-08-07",
+   "facts_hash": "ba294c7d53a2bac8",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Williams, Raymond and Ramos is evaluating sales-engagement tools after a Series C funding round",
+    "why_now": [
+     "Series C $90M funding round on 2026-05-19",
+     "Evaluation combo with repeated pricing, security, and integration page views",
+     "Four active people in the last 14 days including the CRO"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "CRO Alexis Hill visited pricing, security, and integration pages and was active today"
+     }
+    ],
+    "angle": "Ask Alexis Hill how the new Series C capital is changing sales-team outreach needs and whether current tools can support that growth."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01757",
+   "alert_date": "2026-08-07",
+   "facts_hash": "d32569e574f62544",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Johnson, Johnson and Brown shows strong trial and buying intent with teammate invites and mailbox connections.",
+    "why_now": [
+     "teammate_invited signal indicates team trial adoption",
+     "mailbox_connected signal shows active platform setup",
+     "trial_started signal combined with teammate_invited forms a team_trial combo"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Charles Robinson is Head of Sales Ops and led teammate invites, mailbox connection, and trial start."
+     }
+    ],
+    "angle": "Ask Charles Robinson how the sales operations team is managing the trial and whether Seqly can support broader team rollout."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01757",
+   "alert_date": "2026-08-08",
+   "facts_hash": "d8a0c85b83c60d8e",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Johnson, Johnson and Brown shows BOFU evaluation and team trial activity with 817 employees in EU HR Tech",
+    "why_now": [
+     "Pricing page visited twice and teammate invited signal evaluation intent",
+     "Trial started plus sequence created indicates active team trial",
+     "Mailbox connected and integration page viewed show setup activity"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Head of Sales Ops invited a teammate, connected a mailbox, created a sequence, and started a trial"
+     },
+     {
+      "person_id": "p4",
+      "why": "Account Executive visited pricing and integration pages, indicating buying interest"
+     }
+    ],
+    "angle": "Ask the Head of Sales Ops how the team trial is going and whether Seqly can support their sales ops workflow."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01757",
+   "alert_date": "2026-08-10",
+   "facts_hash": "9a7e1472d6617915",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Johnson, Johnson and Brown shows strong BOFU intent with pricing page visits and teammate invites.",
+    "why_now": [
+     "Pricing page viewed 5 times in 14 days",
+     "Teammate invited signals team trial evaluation",
+     "Trial started and mailbox connected indicate active setup"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Head of Sales Ops visited pricing page, invited a teammate, connected mailbox, and started a trial"
+     },
+     {
+      "person_id": "p2",
+      "why": "Account Executive viewed pricing and integration pages"
+     }
+    ],
+    "angle": "Ask the Head of Sales Ops how Seqly can support their team trial and mailbox setup."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00059",
+   "alert_date": "2026-08-11",
+   "facts_hash": "dc678abec0b48d94",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Chang LLC shows BOFU buying intent with security, pricing, CRM connection, and teammate invite signals.",
+    "why_now": [
+     "Security page visited twice, pricing page visited once, CRM connected, and teammate invited in the last 14 days.",
+     "Multiple MOFU signals including integration page views, case study views, comparison page views, and a trial started.",
+     "Three people active in the last 14 days with activity 18 times higher than usual."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Anthony Bowman is Head of Sales Ops and connected the CRM, viewed security and pricing pages, invited a teammate, and started a trial."
+     }
+    ],
+    "angle": "Ask Anthony Bowman how Seqly can support his sales operations workflow now that Zoho is connected and a trial is underway."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01757",
+   "alert_date": "2026-08-11",
+   "facts_hash": "46de41a601e9b7cc",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Johnson, Johnson and Brown shows BOFU evaluation and team trial activity with 6 active users in the last 14 days.",
+    "why_now": [
+     "Pricing page viewed 7 times and teammate invited signals evaluation intent.",
+     "Trial started plus sequence created indicates a team trial is underway.",
+     "6 people active in the last 14 days with activity 23x above usual."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Charles Robinson leads Sales Ops and has taken the strongest buying actions including trial start, mailbox connection, and teammate invite."
+     }
+    ],
+    "angle": "Ask Charles Robinson how the team trial is going and whether Seqly can support the sales ops workflows he is already testing."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00971",
+   "alert_date": "2026-08-12",
+   "facts_hash": "48603fe0a8c78f1e",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Morris, Johnson and Morris shows BOFU intent with pricing and security page visits after a new VP Sales joined.",
+    "why_now": [
+     "Pricing page and security page visits indicate BOFU evaluation.",
+     "New VP Sales joined on 2026-06-14, creating a leadership trigger.",
+     "4 active people and 4 anonymous visitors in the last 14 days show sustained interest."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Sharon Mathews is a Sales Manager who visited the security page and blog, showing direct buying interest."
+     },
+     {
+      "person_id": "p5",
+      "why": "Joseph Tucker is VP Revenue Operations and aligns with the new sales leadership trigger."
+     }
+    ],
+    "angle": "Open by asking Sharon Mathews how Seqly can support her sales team's security and pricing evaluation under the new VP Sales."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00826",
+   "alert_date": "2026-08-15",
+   "facts_hash": "46cae483b8c85db5",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Moody and Sons shows bottom-of-funnel pricing interest and hired a new Head of Sales Development in May.",
+    "why_now": [
+     "Pricing page visit indicates BOFU evaluation intent.",
+     "New Head of Sales Development joined on 2026-05-23 and may be reviewing sales engagement tools.",
+     "Multiple email clicks and integration page visits show active research across teams."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Russell Mccarthy is the new Head of Sales Development and visited the pricing page."
+     }
+    ],
+    "angle": "Ask Russell Mccarthy how his team is evaluating sales engagement platforms as he ramps up the SDR organization."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01432",
+   "alert_date": "2026-08-15",
+   "facts_hash": "0f5419e6dbdd5f79",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Schneider Ltd shows strong buying intent after Seed funding and repeated pricing page visits.",
+    "why_now": [
+     "Seed $4M funding round on 2026-08-02",
+     "Pricing page visited 3 times in the last 14 days",
+     "Trigger then intent combo detected with funding followed by high-intent signals"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Demand Gen Manager visited the pricing page most recently on 2026-08-13"
+     },
+     {
+      "person_id": "p5",
+      "why": "Account Executive visited the pricing page on 2026-08-11"
+     }
+    ],
+    "angle": "Ask the Demand Gen Manager how Schneider Ltd plans to scale sales engagement now that they have new Seed funding."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00160",
+   "alert_date": "2026-08-16",
+   "facts_hash": "e4d626980fef0bff",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Price, Nguyen and Rollins shows bottom-of-funnel interest with pricing and security page visits from active staff.",
+    "why_now": [
+     "Pricing page visit indicates evaluation-stage buying intent.",
+     "Security page visit shows product relevance for a cybersecurity account.",
+     "Five people were active in the last 14 days across multiple signals."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Visited the pricing page most recently and fits a marketing outreach role."
+     },
+     {
+      "person_id": "p3",
+      "why": "Visited the security page and attended a webinar, showing strong product interest as a BDR."
+     }
+    ],
+    "angle": "Ask the Marketing Specialist how Seqly can support their current evaluation and outreach campaigns."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01757",
+   "alert_date": "2026-08-16",
+   "facts_hash": "3c8cb8d7fd29bdf6",
+   "source": "template",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Johnson, Johnson and Brown: 363 · fit A · pricing_page, crm_connected",
+    "why_now": [
+     "5 people active in the last 14 days",
+     "Highest-intent activity: pricing_page, crm_connected, security_page",
+     "Pattern: evaluation + team_trial"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "most senior active person; recently on crm_connected, pricing_page"
+     }
+    ],
+    "angle": "Open with cost: what a ramped SDR team costs today and what Seqly changes."
+   },
+   "problems": [
+    "headline missing or too long"
+   ]
+  },
+  {
+   "account_id": "acc_01757",
+   "alert_date": "2026-08-17",
+   "facts_hash": "a684017647a0b99b",
+   "source": "template",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Johnson, Johnson and Brown: 394 · fit A · pricing_page, crm_connected",
+    "why_now": [
+     "5 people active in the last 14 days",
+     "Highest-intent activity: pricing_page, crm_connected, security_page",
+     "Pattern: evaluation + team_trial"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "most senior active person; recently on crm_connected, pricing_page"
+     }
+    ],
+    "angle": "Open with cost: what a ramped SDR team costs today and what Seqly changes."
+   },
+   "problems": [
+    "headline missing or too long"
+   ]
+  },
+  {
+   "account_id": "acc_00141",
+   "alert_date": "2026-08-20",
+   "facts_hash": "95bf86845de9c615",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Collier Ltd is evaluating sales-engagement tools with repeated BOFU page views and two SDR hires posted.",
+    "why_now": [
+     "Security page viewed 3 times and pricing page viewed once in the last 14 days.",
+     "Case studies viewed 4 times and integration page viewed 3 times in the last 14 days.",
+     "Two SDR roles posted on 2026-06-09 indicate team expansion."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "RevOps Manager who viewed security, case study, and integration pages in the last 14 days."
+     }
+    ],
+    "angle": "Ask the RevOps Manager how they are scoping security and integration requirements as they add SDR capacity."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00783",
+   "alert_date": "2026-08-21",
+   "facts_hash": "f36078e1808a4781",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Thompson LLC, a 631-person Data & Analytics firm with no CRM, shows strong bottom-of-funnel interest in Seqly.",
+    "why_now": [
+     "12 pricing page views in the last 14 days indicate active buying intent.",
+     "6 comparison page views suggest they are evaluating alternatives.",
+     "Fit grade A and 631 employees make them a high-value target."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Emily Burns visited both pricing and comparison pages, showing direct interest in Seqly."
+     }
+    ],
+    "angle": "Ask Emily Burns how her team currently manages sales engagement without a CRM and whether Seqly can help streamline their outreach."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01882",
+   "alert_date": "2026-08-24",
+   "facts_hash": "1e08dd658f1be76c",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Martin-Rangel is evaluating Seqly with a new VP Sales and active pricing-page interest",
+    "why_now": [
+     "New VP Sales joined 2026-06-20",
+     "Pricing page viewed 4 times in 14 days",
+     "Trial started and mailbox connected"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Sales Manager viewed pricing, case studies, connected mailbox, and started a trial"
+     }
+    ],
+    "angle": "Ask Robert Hill how Seqly can support the sales team under the new VP Sales leadership."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00643",
+   "alert_date": "2026-08-26",
+   "facts_hash": "68b7a9141ed74066",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Arellano Group is evaluating Seqly with high-intent page views and recent SDR hiring",
+    "why_now": [
+     "Pricing page visit indicates bottom-of-funnel evaluation",
+     "Integration page visit and webinar attendance show mid-funnel interest",
+     "Two SDR job postings in July signal sales team expansion"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Viewed the integration page, showing direct interest in connecting Seqly to their stack"
+     }
+    ],
+    "angle": "Ask Jade King how Seqly can support the integration needs she researched while the team hires new SDRs."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01237",
+   "alert_date": "2026-08-27",
+   "facts_hash": "569ea19a616ef446",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Martin Ltd shows evaluation-stage buying intent with pricing page visits and a new Head of RevOps.",
+    "why_now": [
+     "Two pricing page visits indicate BOFU evaluation interest.",
+     "A new Head of RevOps started on 2026-06-05, creating a leadership change trigger.",
+     "Eight active people in the last 14 days show sustained account engagement."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Robert Lewis is VP Revenue Operations and clicked emails, making him the relevant exec for a sales-engagement conversation."
+     },
+     {
+      "person_id": "p1",
+      "why": "Jay Savage is Demand Gen Manager and clicked emails plus visited the integration page, showing direct product interest."
+     }
+    ],
+    "angle": "Ask Robert Lewis how the new Head of RevOps is evaluating sales-engagement tools and offer to show how Seqly fits their current Salesforce setup."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00995",
+   "alert_date": "2026-08-28",
+   "facts_hash": "db6681fff9969ef2",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Hernandez, Thompson and Rojas shows strong bottom-of-funnel activity with CRM connection, pricing page view, and teammate invite",
+    "why_now": [
+     "CRM connected, pricing page viewed, and teammate invited all signal bottom-of-funnel intent",
+     "Trial started and sequence created show active product evaluation",
+     "Activity is four times the usual level"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Maria Vasquez performed every high-intent action including CRM connection, pricing page view, teammate invite, mailbox connection, sequence creation, and trial start"
+     },
+     {
+      "person_id": "p1",
+      "why": "Mary Taylor is VP Revenue Operations and created sequences, making her a relevant decision maker for sales engagement"
+     }
+    ],
+    "angle": "Ask Maria Vasquez about her trial setup and whether she needs help connecting additional mailboxes or inviting more teammates"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01077",
+   "alert_date": "2026-08-28",
+   "facts_hash": "1db9b448a917a12d",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Williamson-Watson shows BOFU intent after hiring a new CRO and Head of RevOps",
+    "why_now": [
+     "Pricing page visits indicate bottom-of-funnel evaluation",
+     "New CRO and Head of RevOps joined within the last 90 days",
+     "Activity is 5x usual with multiple comparison and integration page views"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "VP Revenue Operations visited pricing and integration pages and last seen today"
+     }
+    ],
+    "angle": "Open by asking how the new CRO and Head of RevOps are evaluating sales engagement tools against current processes."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01882",
+   "alert_date": "2026-08-28",
+   "facts_hash": "cde9bcc4bfb3f4c1",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Martin-Rangel is evaluating Seqly with a team trial and new VP Sales leadership",
+    "why_now": [
+     "Pricing page viewed 5 times and teammate invited indicate active evaluation",
+     "Trial started plus sequence created show team trial in progress",
+     "New VP Sales joined 2026-06-20 creating a buying window"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Sales Manager Robert Hill visited pricing, invited a teammate, started a trial, and created sequences last week"
+     }
+    ],
+    "angle": "Ask Robert Hill how the team trial is going and whether the new VP Sales has set priorities for sales engagement."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01471",
+   "alert_date": "2026-08-30",
+   "facts_hash": "8ddca0033e7912af",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Graham PLC shows BOFU buying intent with pricing page visit, teammate invite, and active trial",
+    "why_now": [
+     "Pricing page visit and teammate invite signal BOFU evaluation",
+     "Trial started and sequence created show active product testing",
+     "Six active users in 14 days indicate growing internal adoption"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Jeremy Espinoza is an Account Executive who visited pricing, invited a teammate, connected a mailbox, created a sequence, and started a trial"
+     },
+     {
+      "person_id": "p2",
+      "why": "Eric Gardner is VP Revenue Operations and has engaged with ads and blog content"
+     }
+    ],
+    "angle": "Ask Jeremy Espinoza how the trial is going and whether Seqly can support his team's outbound sequences"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01865",
+   "alert_date": "2026-08-30",
+   "facts_hash": "270699bea7847ac4",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Murray-Lewis shows bottom-of-funnel intent after hiring a new sales leader and adopting Salesforce.",
+    "why_now": [
+     "Head of Sales Development joined on 2026-07-11 and pricing page visits indicate active evaluation.",
+     "Salesforce CRM adoption on 2026-07-02 coincides with trial started and sequence created signals.",
+     "Trigger then intent combo shows new sales leadership paired with pricing page and trial activity."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Jennifer Santiago is the new Head of Sales Development and has visited pricing and comparison pages, connected a mailbox, created a sequence, and started a trial."
+     },
+     {
+      "person_id": "p3",
+      "why": "Beth Sloan is VP Revenue Operations and has visited the pricing page and clicked emails."
+     }
+    ],
+    "angle": "Ask Jennifer Santiago how Seqly can support her sales development team's sequencing and mailbox workflows on the new Salesforce instance."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01287",
+   "alert_date": "2026-09-02",
+   "facts_hash": "169f7d65c7dd463d",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Ramsey-Richards is evaluating sales-engagement tools with multiple buyers active in the last 14 days.",
+    "why_now": [
+     "Evaluation combo detected with security page visit at BOFU stage.",
+     "5 people active in 14 days and activity is 1.6x usual.",
+     "Sales Manager downloaded content and clicked email, VP Sales visited blog."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Sales Manager Heather Campos downloaded content and clicked an email, showing active buying interest."
+     }
+    ],
+    "angle": "Ask Heather Campos how her team is comparing sales-engagement platforms and whether integration with Salesforce is a priority."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01865",
+   "alert_date": "2026-09-02",
+   "facts_hash": "60421c47d4021fe1",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Murray-Lewis shows strong bottom-of-funnel activity with a new sales leader and recent CRM adoption",
+    "why_now": [
+     "Head of Sales Development visited pricing page, invited a teammate, and started a trial",
+     "New Head of Sales Development joined on 2026-07-11 and Salesforce was adopted on 2026-07-02",
+     "Multiple BOFU signals including pricing page visits and teammate invitation indicate active evaluation"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Jennifer Santiago is the Head of Sales Development and has the highest intent activity across pricing, trial, and teammate invite signals"
+     }
+    ],
+    "angle": "Open by acknowledging her recent role change and ask how Seqly can support her sales development team's outreach within their new Salesforce setup"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01865",
+   "alert_date": "2026-09-03",
+   "facts_hash": "21b7b36185a6d20b",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Murray-Lewis shows strong BOFU intent with pricing page visits and a teammate invite, plus a new Head of Sales Development and recent Salesforce adoption.",
+    "why_now": [
+     "Head of Sales Development visited pricing page, invited a teammate, and started a trial",
+     "New sales leader joined July 11 and company adopted Salesforce on July 2",
+     "Team trial activity combined with trigger then intent signals indicates active evaluation"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Jennifer Santiago is the Head of Sales Development and has the strongest buying signals including pricing page, trial started, and teammate invited"
+     },
+     {
+      "person_id": "p4",
+      "why": "Beth Sloan is VP Revenue Operations and visited the pricing page, making her relevant for a sales engagement conversation"
+     }
+    ],
+    "angle": "Open by acknowledging her recent move into Head of Sales Development and ask how she is ramping the new team on Salesforce while evaluating sales engagement tools."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01882",
+   "alert_date": "2026-09-03",
+   "facts_hash": "c289432837f06cb2",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Martin-Rangel is evaluating Seqly with a team trial and new VP Sales leadership.",
+    "why_now": [
+     "Pricing page visited 7 times in 14 days",
+     "Teammate invited and trial started signal active evaluation",
+     "New VP Sales joined 90 days ago"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p5",
+      "why": "Sales Manager who invited a teammate, started a trial, connected a mailbox, and viewed pricing and case studies"
+     },
+     {
+      "person_id": "p3",
+      "why": "Head of Sales Development who visited pricing, viewed case studies, and clicked emails"
+     }
+    ],
+    "angle": "Ask Robert Hill how the team trial is going and whether Seqly can help his SDRs book more meetings under the new VP Sales."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01514",
+   "alert_date": "2026-09-04",
+   "facts_hash": "72aa769f178573d2",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Jones and Sons shows BOFU buying intent with pricing page views, teammate invites, and a team trial signal",
+    "why_now": [
+     "Pricing page visit and teammate invited signal BOFU interest",
+     "Team trial combo indicates multi-user evaluation",
+     "Sequence created and mailbox connected show active platform use"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Sales Manager Angela Wong performed the widest range of high-intent actions including pricing page, teammate invite, mailbox connection, sequence creation, and trial start"
+     },
+     {
+      "person_id": "p1",
+      "why": "CRO James Howard created sequences and is the executive decision maker for sales engagement"
+     }
+    ],
+    "angle": "Open with Angela Wong by referencing her team's trial activity and ask how Seqly can support the sequences her team is already building"
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01471",
+   "alert_date": "2026-09-05",
+   "facts_hash": "abf4e3ddeb13391d",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Graham PLC shows strong bottom-of-funnel intent with pricing page visits, CRM connection, teammate invite, and an active team trial.",
+    "why_now": [
+     "Pricing page visited twice and CRM connected signal bottom-of-funnel evaluation.",
+     "Teammate invited and trial started indicate a team trial is underway.",
+     "Seven active people and 1.7x usual activity show elevated engagement over the last 14 days."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p2",
+      "why": "Jeremy Espinoza is an Account Executive who connected the CRM, visited pricing, invited a teammate, connected a mailbox, created sequences, and started a trial."
+     }
+    ],
+    "angle": "Ask Jeremy how the team trial is going and whether Seqly can help his sales team convert more sequences into pipeline."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01865",
+   "alert_date": "2026-09-09",
+   "facts_hash": "320832c3bf9527f6",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Murray-Lewis shows strong bottom-of-funnel activity after hiring a new sales leader and adopting Salesforce.",
+    "why_now": [
+     "Pricing page viewed 3 times and CRM connected in the last 14 days.",
+     "New Head of Sales Development joined July 11 and Salesforce was adopted July 2.",
+     "Teammate invited and sequence created indicate active trial evaluation."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "Jennifer Santiago is the new Head of Sales Development and has connected CRM and mailbox, invited a teammate, created sequences, and started a trial."
+     }
+    ],
+    "angle": "Ask Jennifer how the new Salesforce setup is working and offer help scaling sequence outreach across her SDR team."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01357",
+   "alert_date": "2026-09-17",
+   "facts_hash": "e9ebdccda0a60c82",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Wilson Ltd shows evaluation-stage interest with pricing page visits and a new Head of RevOps",
+    "why_now": [
+     "Pricing page visit indicates BOFU evaluation intent",
+     "New Head of RevOps joined 2026-07-07 and may be reviewing sales engagement tools",
+     "Multiple MOFU signals including integration page and email clicks show active research"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "CRO Shannon Holmes downloaded content and is the executive buyer for sales engagement"
+     },
+     {
+      "person_id": "p2",
+      "why": "BDR Edward Hoover visited integration and content pages, indicating hands-on evaluation"
+     }
+    ],
+    "angle": "Ask Shannon Holmes how the new Head of RevOps is prioritizing sales engagement and sequence automation for the BDR team."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00359",
+   "alert_date": "2026-09-22",
+   "facts_hash": "bbb3841769bb7f09",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Vargas PLC shows elevated buying intent with 10 active people and 1.7x usual activity in the last 14 days.",
+    "why_now": [
+     "10 people were active in the last 14 days, well above baseline.",
+     "Activity is 1.7 times the usual level, indicating increased interest.",
+     "Multiple stakeholders viewed case studies and integration pages, signaling mid-funnel evaluation."
+    ],
+    "contact_first": [
+     {
+      "person_id": "p3",
+      "why": "As CMO, Christopher Norris viewed the integration page, showing direct interest in how Seqly fits their stack."
+     },
+     {
+      "person_id": "p2",
+      "why": "Cynthia Walter manages SDRs and viewed case studies, suggesting she is evaluating sales engagement tools for her team."
+     }
+    ],
+    "angle": "Open by asking Christopher Norris about their current integration needs and how Seqly can streamline their sales engagement workflow."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00160",
+   "alert_date": "2026-09-24",
+   "facts_hash": "8e697cd5e191858f",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Price, Nguyen and Rollins shows strong mid-funnel engagement with multiple security page and email click signals",
+    "why_now": [
+     "Security page visit indicates bottom-of-funnel interest",
+     "Three email clicks and a case study view show active mid-funnel engagement",
+     "Four people active in the last 14 days with activity 2.1x usual"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Viewed a case study and clicked emails, showing direct interest in Seqly offerings"
+     },
+     {
+      "person_id": "p7",
+      "why": "Visited the security page, indicating bottom-of-funnel intent"
+     }
+    ],
+    "angle": "Open by asking how their team currently manages sales engagement follow-up after security content and email interactions."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_01316",
+   "alert_date": "2026-09-24",
+   "facts_hash": "ca01e661004bcf12",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Johnson-Li is evaluating sales-engagement tools after adopting Salesforce in August",
+    "why_now": [
+     "Pricing page visit combined with email clicks indicates active evaluation",
+     "Salesforce adoption on 2026-08-18 creates a window to position Seqly as the engagement layer",
+     "Multiple buyers including VP Sales and Head of Sales Ops have visited the site recently"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p5",
+      "why": "VP Sales viewed the integration page and blog, showing direct interest in how Seqly fits the sales stack"
+     }
+    ],
+    "angle": "Open by asking how the new Salesforce instance is being used and whether reps are getting enough sequence support to hit pipeline targets."
+   },
+   "problems": []
+  },
+  {
+   "account_id": "acc_00826",
+   "alert_date": "2026-09-26",
+   "facts_hash": "39342e0c52695829",
+   "source": "llm",
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "narrative": {
+    "headline": "Moody and Sons shows evaluation-stage buying intent with 7 active people and 1.8x normal activity",
+    "why_now": [
+     "7 people active in the last 14 days with activity 1.8x usual",
+     "Pricing page visit indicates BOFU evaluation interest",
+     "Combination of pricing page and content download signals active evaluation"
+    ],
+    "contact_first": [
+     {
+      "person_id": "p1",
+      "why": "Head of Sales Development downloaded content and is active in the last 14 days"
+     },
+     {
+      "person_id": "p2",
+      "why": "Engineering Manager visited the pricing page and clicked an ad in the last 14 days"
+     }
+    ],
+    "angle": "Ask Russell Mccarthy how Seqly can help his sales development team convert evaluation interest into pipeline."
+   },
+   "problems": []
+  }
+ ]
+}
