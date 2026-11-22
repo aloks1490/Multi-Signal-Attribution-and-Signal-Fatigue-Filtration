@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/aloks1490/Multi-Signal-Attribution-and-Signal-Fatigue-Filtration/actions/workflows/ci.yml/badge.svg)](https://github.com/aloks1490/Multi-Signal-Attribution-and-Signal-Fatigue-Filtration/actions/workflows/ci.yml) [![Live app](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://multi-signal-attribution-and-signal-fatigue-filtration-wvso8jz.streamlit.app)
 
-**[Try the live app](https://multi-signal-attribution-and-signal-fatigue-filtration-wvso8jz.streamlit.app)** (synthetic data; if it has been idle it wakes up and rebuilds its data, which takes a few minutes).
+**[Try the live app](https://multi-signal-attribution-and-signal-fatigue-filtration-wvso8jz.streamlit.app)** (synthetic data; after a quiet spell it sleeps, and waking it can take a few minutes).
 
 Sales teams drown in alerts: every pricing-page visit, ad click and job change pings a rep, reps stop reading them, and real buyers get missed. This project replaces one-alert-per-event with **account-level intent scoring**: signals decay over time, patterns across people and channels count more than single events, and a rep gets a short daily list of accounts with a plain-English reason, in Slack and in HubSpot.
 
