@@ -136,3 +136,19 @@ def test_accept_button_records_feedback(app_env):
         pytest.skip("no alerts in the small world's last 30 days")
     accept[0].click().run()
     assert len(state.feedback()) == 1
+
+
+# ---------- first-start build (fresh clone or hosted copy) ----------
+
+def test_bootstrap_builds_missing_worlds_once(tmp_path):
+    from app import bootstrap
+
+    data = tmp_path / "data"
+    assert bootstrap.missing(data) == ["holdout", "dev"]
+    steps: list[str] = []
+    assert bootstrap.ensure(data, on_step=steps.append, profile="small") == ["holdout", "dev"]
+    assert steps == ["holdout", "dev"] and bootstrap.missing(data) == []
+    assert sorted(p.name for p in data.iterdir()) == ["dev.duckdb", "holdout.duckdb"]  # no half-built leftovers
+    n = q.df(data / "holdout.duckdb", "select count(*) n from gold.account_daily_scores").n[0]
+    assert n > 0
+    assert bootstrap.ensure(data, profile="small") == []  # already there: nothing rebuilt

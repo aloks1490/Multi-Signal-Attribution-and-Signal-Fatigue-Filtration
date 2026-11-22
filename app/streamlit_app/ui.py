@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 import streamlit as st  # noqa: E402
 
+from app import bootstrap  # noqa: E402
 from app import queries as q  # noqa: E402
 from app import state  # noqa: E402
 
@@ -47,13 +48,42 @@ def params(db_key: tuple[str, float]) -> dict:
     return q.params(db_key[0])
 
 
+def is_demo() -> bool:
+    """The public hosted copy sets SIGNAL_DEMO=1 (environment or Streamlit secrets)."""
+    if os.environ.get("SIGNAL_DEMO") == "1":
+        return True
+    try:
+        return str(st.secrets.get("SIGNAL_DEMO", "")) == "1"
+    except Exception:  # no secrets file
+        return False
+
+
+def ensure_data() -> None:
+    """On a fresh clone or a hosted copy, build the synthetic worlds before the first page renders."""
+    if os.environ.get("SIGNAL_APP_DBS") or not bootstrap.missing():
+        return
+    with st.status("First start: building the synthetic worlds (2,000 companies each, 1–3 minutes)…",
+                   expanded=True) as status:
+        try:
+            built = bootstrap.ensure(on_step=lambda name: status.write(f"Generating and scoring the {name} world…"))
+        except Exception as e:
+            status.update(label="Building the data failed", state="error")
+            st.error(str(e))
+            st.stop()
+        status.update(label=f"Built: {', '.join(built) or 'ready'}", state="complete", expanded=False)
+    st.cache_data.clear()
+
+
 def sidebar() -> dict:
     """Data source, explore profile and viewer name. Returns the current choices."""
+    ensure_data()
     dbs = q.databases()
     if not dbs:
         st.error("No warehouse found. Run `make m1` first.")
         st.stop()
     with st.sidebar:
+        if is_demo():
+            st.caption("Public demo on synthetic data. Changes you make here stay in this copy and reset when it restarts.")
         name = st.selectbox("Data", list(dbs), help="holdout = headline numbers; dev = where thresholds were tuned")
         db = dbs[name]
         active = state.active_profile()

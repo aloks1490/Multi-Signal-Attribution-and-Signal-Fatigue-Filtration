@@ -16,6 +16,9 @@ st.title("Settings")
 st.subheader("Active profile")
 st.markdown("This decides which alerts reach reps in the Slack digest and the HubSpot sync. The **Explore** toggle in the sidebar "
             "only changes what you see; this setting changes what everyone receives.")
+if ui.is_demo():
+    st.info("This is the public demo: a change here applies to this copy only and resets when the app restarts. "
+            "The scheduled Slack and HubSpot run reads the setting committed in the repository.")
 summary = q.profile_summary(ui.evaluation(ctx["db_key"])).set_index("key")
 for key in q.PROFILES:
     r = summary.loc[key]
