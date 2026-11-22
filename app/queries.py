@@ -5,6 +5,7 @@ Rules: no UI imports, every function opens the warehouse read-only and closes it
 """
 from __future__ import annotations
 
+import json
 import os
 from contextlib import contextmanager
 from datetime import date, timedelta
@@ -23,6 +24,7 @@ N_AES = 5
 PROFILES = ("precise", "broad")
 PROFILE_LABELS = {"precise": "Precise: fewer, surer alerts", "broad": "Broad: catch more buyers"}
 POSITIVE_CLASSES = ("planted_buyer", "random_converter")
+BUNDLED_NARRATIVES = ROOT / "app" / "narratives_holdout.json"
 
 
 def databases() -> dict[str, Path]:
@@ -33,6 +35,20 @@ def databases() -> dict[str, Path]:
         return {name: Path(path) for name, path in pairs}
     found = {name: ROOT / "data" / f"{name}.duckdb" for name in ("holdout", "dev")}
     return {k: v for k, v in found.items() if v.exists()}
+
+
+def bundled_narratives(path: Path | None = None) -> pd.DataFrame:
+    """Explanations shipped with the app for the holdout world (made once by activation/bundle.py), so a copy with
+    no LLM key and no daily-run state still shows them. Same columns the alert feed reads from app state."""
+    path = path or Path(os.environ.get("SIGNAL_BUNDLED_NARRATIVES", BUNDLED_NARRATIVES))
+    cols = ["account_id", "alert_date", "source", "model", "narrative"]
+    if not path.exists():
+        return pd.DataFrame(columns=cols)
+    items = json.loads(path.read_text())["narratives"]
+    out = pd.DataFrame([{"account_id": i["account_id"], "alert_date": i["alert_date"], "source": i["source"],
+                         "model": i["model"], "narrative": json.dumps(i["narrative"])} for i in items], columns=cols)
+    out["alert_date"] = pd.to_datetime(out["alert_date"])
+    return out
 
 
 @contextmanager

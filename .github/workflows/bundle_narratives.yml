@@ -1,0 +1,41 @@
+name: Bundle explanations
+
+# Explains every holdout alert once with the configured model and uploads app/narratives_holdout.json as an
+# artifact. Commit that file and the hosted app shows model-written explanations without holding an LLM key.
+# No HubSpot pull, on purpose: the hosted app scores the world without CRM exclusions, so the alerts must match it.
+on:
+  workflow_dispatch:
+    inputs:
+      pause:
+        description: "Seconds between LLM calls (free tiers limit requests per minute)"
+        default: "2"
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_EXTRA_BODY: ${{ vars.LLM_EXTRA_BODY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: make generate NAME=holdout SEED=7
+      - run: make build NAME=holdout
+      - name: Explain every holdout alert
+        env:
+          PAUSE: ${{ inputs.pause }}
+        run: uv run python -m activation.bundle --db data/holdout.duckdb --out app/narratives_holdout.json --pause "$PAUSE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: narratives_holdout
+          path: app/narratives_holdout.json
+          retention-days: 14

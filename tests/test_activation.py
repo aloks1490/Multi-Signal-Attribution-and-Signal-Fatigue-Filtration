@@ -266,3 +266,49 @@ def test_activation_never_reads_truth_labels():
     for f in (ROOT / "activation").glob("*.py"):
         text = f.read_text()
         assert not re.search(r"labels\.[a-z_]", text) and "account_truth" not in text, f.name
+
+
+# ---------- explanations shipped with the app (activation/bundle.py) ----------
+
+def test_bundle_explains_every_alert_and_the_feed_shows_it(small_db, tmp_path, monkeypatch):
+    from streamlit.testing.v1 import AppTest
+
+    from activation import bundle
+    from app import sandbox
+
+    rows = bundle.alerts(small_db)
+    expected = q.df(small_db, """select count(distinct (account_id, alert_date)) n from gold.engine_alerts
+                                 where alert_date >= (select cast(value as date) from seeds.scoring_params
+                                                      where param = 'eval_start')""").n[0]
+    assert len(rows) == expected > 0
+
+    attempts = []
+
+    def flaky_then_good(cfg, facts):  # first call fails (rate limit), the retry succeeds
+        attempts.append(1)
+        if len(attempts) == 1:
+            raise RuntimeError("429")
+        return json.dumps(narrate.template(facts))
+
+    cfg = narrate.LLMConfig("http://llm", "k", "vendor/test-model")
+    out = bundle.build(rows, cfg, pause=0, retry_wait=0, caller=flaky_then_good, log=lambda *_: None)
+    assert out["counts"] == {"llm": len(rows)} and len(attempts) == len(rows) + 1
+    path = tmp_path / "narratives.json"
+    path.write_text(json.dumps(out))
+
+    frame = q.bundled_narratives(path)
+    assert len(frame) == len(rows) and str(frame.alert_date.dtype).startswith("datetime64")
+    assert len(q.bundled_narratives(tmp_path / "missing.json")) == 0
+
+    proj = sandbox._scratch_project(tmp_path, {})
+    monkeypatch.setenv("SIGNAL_APP_DBS", f"holdout={small_db}")
+    monkeypatch.setenv("SIGNAL_APP_STATE", str(tmp_path / "state.duckdb"))
+    monkeypatch.setenv("SIGNAL_SEEDS_DIR", str(proj / "seeds"))
+    monkeypatch.setenv("SIGNAL_BUNDLED_NARRATIVES", str(path))
+    at = AppTest.from_file(str(Path(__file__).resolve().parent.parent / "app/streamlit_app/views/alerts.py"),
+                           default_timeout=120).run()
+    at.selectbox[1].set_value(30).run()
+    assert not at.exception, at.exception
+    if not any("Accept" == b.label for b in at.button):
+        pytest.skip("no alerts in the small world's last 30 days")
+    assert any("written by the model (test-model)" in c.value for c in at.caption)

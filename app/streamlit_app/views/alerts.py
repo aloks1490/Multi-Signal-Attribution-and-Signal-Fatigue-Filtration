@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from app import queries as q  # noqa: E402
@@ -29,6 +30,9 @@ ae = None if ae == "All" else ae
 feed = q.alert_feed(ctx["db"], prof, as_of, days=days, ae=ae)
 fb = state.feedback()
 stories = state.narratives()
+if ctx["db_name"] == "holdout":  # the shipped explanations belong to the holdout world; this copy's own runs come first
+    bundled = q.bundled_narratives()
+    stories = pd.concat([stories, bundled], ignore_index=True) if len(stories) else bundled
 st.caption(f"{len(feed)} alerts in the last {days} days. An account alerts when it crosses the threshold, then stays quiet for "
            "the cooldown unless its score jumps; each AE has a daily and weekly budget.")
 
@@ -41,7 +45,9 @@ for _, a in feed.iterrows():
         story = stories[(stories.account_id == a.account_id) & (stories.alert_date.dt.date == a.alert_date.date())] if len(stories) else stories
         if len(story):
             n = json.loads(story.iloc[0].narrative)
-            label = "written by the model" if story.iloc[0].source == "llm" else "template"
+            model = story.iloc[0].model
+            label = (f"written by the model ({str(model).split('/')[-1]})" if story.iloc[0].source == "llm" and model
+                     else "written by the model" if story.iloc[0].source == "llm" else "template")
             left.markdown(f"**{n['headline']}**  \n" + "  \n".join(f"• {b}" for b in n["why_now"]) + f"  \n_Angle:_ {n['angle']}")
             left.caption(f"Explanation: {label}")
         if len(done):
