@@ -1,6 +1,8 @@
 # Signal Engine: fewer alerts, more buyers
 
-[![CI](https://github.com/aloks1490/Multi-Signal-Attribution-and-Signal-Fatigue-Filtration/actions/workflows/ci.yml/badge.svg)](https://github.com/aloks1490/Multi-Signal-Attribution-and-Signal-Fatigue-Filtration/actions/workflows/ci.yml)
+[![CI](https://github.com/aloks1490/Multi-Signal-Attribution-and-Signal-Fatigue-Filtration/actions/workflows/ci.yml/badge.svg)](https://github.com/aloks1490/Multi-Signal-Attribution-and-Signal-Fatigue-Filtration/actions/workflows/ci.yml) [![Live app](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://multi-signal-attribution-and-signal-fatigue-filtration-wvso8jz.streamlit.app)
+
+**[Try the live app](https://multi-signal-attribution-and-signal-fatigue-filtration-wvso8jz.streamlit.app)** (synthetic data; if it has been idle it wakes up and rebuilds its data, which takes a few minutes).
 
 Sales teams drown in alerts: every pricing-page visit, ad click and job change pings a rep, reps stop reading them, and real buyers get missed. This project replaces one-alert-per-event with **account-level intent scoring**: signals decay over time, patterns across people and channels count more than single events, and a rep gets a short daily list of accounts with a plain-English reason, in Slack and in HubSpot.
 
@@ -100,7 +102,7 @@ A company record: tier and score at the top, the alert task in the timeline, the
 |---|---|
 | ![Johnson-Li marked as customer, tier still Hot](docs/img/hubspot_loop_before.png) | ![Johnson-Li after the run: tier Excluded, reason crm_customer](docs/img/hubspot_loop_after.png) |
 
-**The app** (Streamlit) shows the same engine from the inside:
+**The app** ([live](https://multi-signal-attribution-and-signal-fatigue-filtration-wvso8jz.streamlit.app), Streamlit) shows the same engine from the inside. Company names in the Slack digest link to their page here:
 
 | Account deep-dive: score history, the formula step by step, decay | Alert feed with reasons and accept / dismiss |
 |---|---|
