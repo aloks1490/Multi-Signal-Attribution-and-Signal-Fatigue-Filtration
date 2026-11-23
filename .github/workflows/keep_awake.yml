@@ -1,0 +1,78 @@
+name: Keep the app awake
+
+# Streamlit Community Cloud puts an app to sleep after 12 hours without visitors. A plain HTTP request does not
+# count as a visit, so this opens the app in a real browser every 6 hours, clicks the wake button if it is asleep,
+# and waits until the Overview page has rendered. If it never renders, the job fails: a free uptime check.
+on:
+  schedule:
+    - cron: "17 */6 * * *"  # every 6 hours (UTC), off the hour to avoid GitHub's busiest minute
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-awake
+  cancel-in-progress: true
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_URL: ${{ vars.APP_BASE_URL }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Playwright
+        run: pip install playwright && playwright install --with-deps chromium
+      - name: Visit the app
+        run: |
+          python - <<'EOF'
+          import os, time
+          from playwright.sync_api import sync_playwright
+
+          url = os.environ["APP_URL"].rstrip("/") + "/"
+
+          def rendered(page) -> bool:
+              for f in page.frames:
+                  try:
+                      if "Fewer alerts, more buyers" in f.content():
+                          return True
+                  except Exception:  # a frame can detach while the app reloads
+                      pass
+              return False
+
+          with sync_playwright() as p:
+              browser = p.chromium.launch()
+              page = browser.new_page()
+              page.goto(url, timeout=90_000)
+              page.wait_for_timeout(5_000)
+              wake = page.get_by_role("button", name="Yes, get this app back up!")
+              if wake.count():
+                  wake.click()
+                  print("Was asleep: clicked the wake button")
+              else:
+                  print("Was awake")
+              # The app runs in an iframe; wait until a frame shows the Overview title. After a wake-up the app
+              # may also rebuild its data first, so allow a few minutes.
+              deadline = time.time() + 8 * 60
+              while time.time() < deadline:
+                  if rendered(page):
+                      print("App rendered")
+                      page.wait_for_timeout(20_000)  # keep the session open briefly so it counts as a visit
+                      break
+                  page.wait_for_timeout(10_000)
+              else:
+                  page.screenshot(path="app.png", full_page=True)
+                  raise SystemExit(f"The app did not render within 8 minutes: {url}")
+              browser.close()
+          EOF
+      - name: Screenshot on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: keep-awake-screenshot
+          path: app.png
+          if-no-files-found: ignore
