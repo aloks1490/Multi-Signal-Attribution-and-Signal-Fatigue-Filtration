@@ -172,7 +172,7 @@ Full spec: [docs/implementation.md](docs/implementation.md).
 - Holdout at deployed (dev-F1) thresholds: M2 16 alerts / 86.7% precision / 52% recall vs M1 27 / 55.6% / 60%. At equal alert budgets M2 beats M1 on both (≈40 alerts: 55% / 68% vs 49% / 64%). Hammerer alerts 7 → 2, binger 2 → 0.
 - Weak spot: 2-person "quiet" buyers (4 of 12 misses).
 - **Decided: keep both thresholds.** precise = best dev F1, broad = best dev F2; dbt writes alerts for both (`profile` column). `active_profile` in scoring_params (default `broad`) decides what reps receive. The frontend (M3) gets an explore toggle (viewer only) and a separate, confirmed and logged active setting. F2 was added after the first holdout read; stated in the docs.
-- Holdout, broad (active): 44 alerts / 48.6% precision / 68% recall (17 of 20 planted buyers). Precise: 16 / 86.7% / 52%.
+- Holdout, broad (active): 44 alerts / 48.6% precision / 68% recall (17 of 25 buyers: 17 of the 20 planted, none of the 5 random converters). Precise: 16 / 86.7% / 52%.
 
 ## M3 (29 Oct 2026)
 
