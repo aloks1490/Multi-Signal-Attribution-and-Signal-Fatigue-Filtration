@@ -140,7 +140,7 @@ def positives_caught(ev: dict, profile: str) -> pd.DataFrame:
         lab = ev["labelled"][m]
         lead = lab[lab["outcome"] == "tp"].groupby("account_id")["lead_days"].max()
         pos[m] = pos["account_id"].map(lead)
-    pos["archetype"] = pos["archetype"].where(pos["archetype"].notna(), "no signal")
+    pos["archetype"] = pos["archetype"].where(pos["archetype"].notna(), "no pattern")
     return pos.sort_values("meeting_date").reset_index(drop=True)
 
 

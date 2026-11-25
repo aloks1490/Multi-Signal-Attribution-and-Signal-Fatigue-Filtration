@@ -22,7 +22,7 @@ On the holdout world (13 weeks, 5 account executives, 25 hidden buyers among 2,0
 
 - **17× fewer alerts than per-event pings**, and about half of the alerted accounts are real buyers (vs 1 in 13).
 - The traps mostly stay quiet. Out of 8 planted per type, M2 broad alerts on: bot bursts 0, content bingers 0, trigger-only accounts 0, customers / open deals / bad-fit look-alikes 0, single-person pricing hammerers 4, stalled trials 1. Per-event pings fall for 8 hammerers and 8 stalled trials.
-- **Missed:** the 5 "random converters" (buyers who leave no signal, planted so recall cannot be 100%), 2 quiet two-person buyers and 1 product-led buyer.
+- **Missed:** the 5 "random converters" (buyers with no buying pattern, only ordinary background activity, planted so recall cannot be 100%), 2 quiet two-person buyers and 1 product-led buyer.
 - **At equal alert volume**, M2 is more precise than M1 at every budget and catches as many or more buyers at three of four budgets (at about 40 alerts: 78% vs 63% precision, 56% vs 60% recall). Classic lead scoring is far behind at every budget. Full tables: [docs/results.md](docs/results.md).
 
 Synthetic data proves the machinery, not the weights. With real data, the same pipeline would tune weights from outcomes.

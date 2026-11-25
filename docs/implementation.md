@@ -300,7 +300,7 @@ A **positive** is an account with a `meeting_date` inside the evaluation window.
 
 - Planted buyers are drawn from fit A/B accounts (80%) and fit C (20%), never from excluded accounts.
 
-**Random converters:** non-excluded, non-D accounts that book a meeting with only background-level activity. They exist so recall is honestly below 100%: no scoring engine catches a buyer who leaves no signal.
+**Random converters:** non-excluded, non-D accounts that book a meeting with only background-level activity. They exist so recall is honestly below 100%: no scoring engine catches a buyer whose activity looks like everyone else's.
 
 ### 5.6 Hard negatives
 
@@ -856,7 +856,7 @@ What it shows:
 - **M2 is more precise than M1 at every budget and recalls as many or more buyers at three of four** (at ~40 alerts M1 catches slightly more: 60% vs 56%). An earlier version of this section, written before the M4 alert rules, said M2 won on both at every budget; the M4 cooldown and score-jump rules changed the counts. F1 picks a very strict point for M2 (26 alerts in 13 weeks against a capacity of 650), because M2 boosts committee buyers far above 2-person "quiet" buyers. The broad (F2) profile sets a better operating point: 67 alerts (jump re-alerts included), 68% recall (17 of 20 planted buyers), about half the alerted accounts real buyers.
 - **Static points with F2 catch more (76%) but need twice the alerts at under half the precision**, and at equal budgets static points fall far behind (~40 alerts: 24% recall vs 68%).
 - **The traps M2 targets now mostly stay quiet.** Hard-negative accounts alerted, M1 → M2: content_binger 2 → 0, pricing_hammerer 7 → 2; stalled_trial, trigger_only, bot_burst, customer, open-deal and low-fit all 0.
-- **Missed by M2 broad:** 5 random converters (nothing to find), 2 quiet buyers, 1 PLG buyer. Quiet buyers remain the weak spot: two people, one source, no product use. Broad lets 4 pricing hammerers and 1 stalled trial through (precise: 2 and 0).
+- **Missed by M2 broad:** 5 random converters (no buying pattern to find), 2 quiet buyers, 1 PLG buyer. Quiet buyers remain the weak spot: two people, one source, no product use. Broad lets 4 pricing hammerers and 1 stalled trial through (precise: 2 and 0).
 - Filling capacity is still the wrong goal: at the capacity threshold M2's precision falls to 4.7%.
 
 **Decision (29 Oct 2026):** keep both profiles. Both thresholds are chosen on dev; the F2 profile was added after the first M2 holdout read, and that is stated here. `active_profile = broad` by default; the app gets an explore toggle and a separate, logged active setting (M3).
